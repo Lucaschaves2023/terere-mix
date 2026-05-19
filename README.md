@@ -2,13 +2,16 @@
 
 [![Node.js](https://img.shields.io/badge/Node.js-22.x-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
-[![SQLite](https://img.shields.io/badge/SQLite-sql.js-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://sql.js.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://supabase.com/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
 [![HTML5](https://img.shields.io/badge/HTML5-Frontend-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/pt-BR/docs/Web/HTML)
 [![CSS3](https://img.shields.io/badge/CSS3-Vanilla-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/pt-BR/docs/Web/CSS)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2022-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)
 [![License](https://img.shields.io/badge/Licen%C3%A7a-MIT-green?style=for-the-badge)](LICENSE)
 
 > **Sistema de e-commerce completo para a lanchonete Tereré Mix**, com cardápio digital, carrinho de compras, gestão de pedidos em tempo real e painel administrativo integrado.
+
+🌐 **Produção:** [terere-mix-2026.vercel.app](https://terere-mix-2026.vercel.app)
 
 ---
 
@@ -27,6 +30,8 @@
 - [API Reference](#-api-reference)
 - [Banco de Dados](#-banco-de-dados)
 - [Variáveis de Ambiente](#-variáveis-de-ambiente)
+- [Deploy](#-deploy)
+- [Páginas do Sistema](#-páginas-do-sistema)
 - [Exemplos de Uso](#-exemplos-de-uso)
 - [Melhorias Futuras](#-melhorias-futuras)
 - [Autor](#-autor)
@@ -38,7 +43,7 @@
 
 O **Tereré Mix** é um sistema web de e-commerce desenvolvido para lanchonetes e pequenos comércios. Ele oferece uma experiência completa de compra online — do cardápio ao checkout — integrada a um robusto painel administrativo para gerenciamento de produtos, pedidos e estoque.
 
-O sistema adota uma arquitetura **cliente-servidor**, com um backend RESTful em **Node.js/Express** e um frontend puramente em **HTML, CSS e JavaScript Vanilla**, conectados via API JSON. O banco de dados utilizado é o **SQLite**, gerenciado pela biblioteca `sql.js` para máxima portabilidade.
+O sistema adota uma arquitetura **cliente-servidor**, com um backend RESTful em **Node.js/Express** e um frontend puramente em **HTML, CSS e JavaScript Vanilla**, conectados via API JSON. O banco de dados utilizado é o **PostgreSQL**, hospedado no **Supabase** (São Paulo), e o deploy é feito via **Vercel** como funções serverless.
 
 ---
 
@@ -60,15 +65,18 @@ Fornecer uma solução simples, leve e de fácil implantação para que estabele
 |---|---|
 | Cardápio Digital | Listagem de produtos por categoria com imagens e preços |
 | Carrinho de Compras | Adição/remoção de itens com cálculo automático de total |
-| Checkout | Formulário de finalização com dados de entrega |
+| Checkout | Formulário de finalização com dados de entrega e cupom de desconto |
 | Acompanhamento de Pedidos | Consulta de status em tempo real por número do pedido |
+| Cupom de Desconto | Validação e aplicação de cupons percentuais ou de valor fixo |
 
 ### 🔧 Painel Administrativo (`/admin.html`)
 | Funcionalidade | Descrição |
 |---|---|
+| Login Seguro | Autenticação via Supabase Auth (email + senha) |
 | Gestão de Produtos | Cadastro, edição e desativação de produtos |
 | Gestão de Pedidos | Visualização e atualização de status dos pedidos |
 | Controle de Estoque | Entradas manuais e histórico de movimentações |
+| Gestão de Cupons | Criação e gerenciamento de cupons de desconto |
 | Dashboard | Visão geral dos pedidos e métricas do negócio |
 
 ---
@@ -80,8 +88,10 @@ Fornecer uma solução simples, leve e de fácil implantação para que estabele
 |---|---|---|
 | [Node.js](https://nodejs.org/) | ≥ 18.x | Runtime JavaScript no servidor |
 | [Express](https://expressjs.com/) | ^5.2.1 | Framework HTTP/RESTful API |
-| [sql.js](https://sql.js.org/) | ^1.14.1 | SQLite compilado para Node.js via WebAssembly |
+| [pg](https://node-postgres.com/) | latest | Driver PostgreSQL para Node.js |
+| [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) | latest | Verificação de JWT do Supabase |
 | [cors](https://www.npmjs.com/package/cors) | ^2.8.6 | Política de Cross-Origin Resource Sharing |
+| [dotenv](https://github.com/motdotla/dotenv) | latest | Carregamento de variáveis de ambiente |
 | [nodemon](https://nodemon.io/) | ^3.1.14 | Hot-reload em desenvolvimento |
 
 ### Frontend
@@ -91,13 +101,14 @@ Fornecer uma solução simples, leve e de fácil implantação para que estabele
 | CSS3 Vanilla | Estilização com variáveis, reset e componentes modulares |
 | JavaScript ES2022 | Lógica do cliente (SPA-like com módulos JS) |
 | Fetch API | Comunicação assíncrona com a API REST |
+| Supabase JS (CDN) | Autenticação no painel admin |
 
-### Banco de Dados
+### Banco de Dados e Infraestrutura
 | Tecnologia | Função |
 |---|---|
-| SQLite | Armazenamento relacional persistente em arquivo |
-| sql.js | Driver SQLite para ambientes Node/Browser |
-| WAL Mode | Write-Ahead Logging para melhor concorrência |
+| PostgreSQL (Supabase) | Banco de dados relacional em nuvem — região São Paulo |
+| Supabase Auth | Autenticação do painel administrativo |
+| Vercel | Hospedagem serverless do frontend e API |
 
 ---
 
@@ -115,12 +126,12 @@ Fornecer uma solução simples, leve e de fácil implantação para que estabele
 │        └────────────────┼──────────────────┘          │
 │                         │  Fetch API (JSON)            │
 └─────────────────────────┼────────────────────────────┘
-                          │ HTTP :3000
+                          │ HTTPS
 ┌─────────────────────────▼────────────────────────────┐
-│                  SERVIDOR (Node.js/Express)            │
+│              VERCEL (Serverless Functions)             │
 │                                                        │
 │  ┌──────────────────────────────────────────────────┐  │
-│  │                   server.js                      │  │
+│  │                   api/index.js                   │  │
 │  │  ┌─────────────┐  ┌────────────┐  ┌───────────┐  │  │
 │  │  │produtoRoutes│  │pedidoRoutes│  │estoqueRts │  │  │
 │  │  └──────┬──────┘  └─────┬──────┘  └─────┬─────┘  │  │
@@ -129,17 +140,21 @@ Fornecer uma solução simples, leve e de fácil implantação para que estabele
 │  │  │produtoCtrl  │  │pedidoCtrl  │  │estoqueCtrl│  │  │
 │  │  └──────┬──────┘  └─────┬──────┘  └─────┬─────┘  │  │
 │  └─────────┼───────────────┼────────────────┼────────┘  │
-│            └───────────────┼────────────────┘           │
-│                            │                            │
-│                     ┌──────▼──────┐                     │
-│                     │   db.js     │ (sql.js adapter)    │
-│                     └──────┬──────┘                     │
-└────────────────────────────┼───────────────────────────┘
-                             │
-                    ┌────────▼────────┐
-                    │  terere.db      │
-                    │ (SQLite / WAL)  │
-                    └─────────────────┘
+└────────────┼───────────────┼────────────────┼───────────┘
+             └───────────────┼────────────────┘
+                             │ DATABASE_URL (pg)
+┌────────────────────────────▼───────────────────────────┐
+│              SUPABASE — South America (São Paulo)        │
+│                                                          │
+│  ┌─────────────────────┐   ┌──────────────────────────┐ │
+│  │  PostgreSQL Database │   │     Supabase Auth        │ │
+│  │  produtos            │   │  (login painel admin)    │ │
+│  │  pedidos             │   └──────────────────────────┘ │
+│  │  itens_pedido        │                                 │
+│  │  estoque_movimentacao│                                 │
+│  │  coupons             │                                 │
+│  └─────────────────────┘                                 │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -147,7 +162,10 @@ Fornecer uma solução simples, leve e de fácil implantação para que estabele
 ## 📁 Estrutura de Pastas
 
 ```
-SIte terere mix fotos/
+terere-mix/
+│
+├── 📁 api/
+│   └── index.js                  # Entry point Vercel — re-exporta o app Express
 │
 ├── 📁 client/                    # Frontend (servido como estático)
 │   ├── 📄 index.html             # Página inicial / entrada da loja
@@ -156,6 +174,7 @@ SIte terere mix fotos/
 │   ├── 📄 pedidos.html           # Acompanhamento de pedidos
 │   ├── 📄 detalhes-pedido.html   # Detalhes de um pedido específico
 │   ├── 📄 perfil-loja.html       # Perfil e informações da loja
+│   ├── 📄 admin-login.html       # Tela de login do painel admin
 │   ├── 📄 admin.html             # Painel administrativo completo
 │   │
 │   ├── 📁 css/
@@ -166,37 +185,50 @@ SIte terere mix fotos/
 │   │
 │   ├── 📁 js/
 │   │   ├── api.js                # Cliente HTTP — módulo central da API
+│   │   ├── admin-auth.js         # Guard de autenticação do painel admin
 │   │   ├── app.js                # Lógica do cardápio e página inicial
 │   │   ├── cart.js               # Gerenciamento do carrinho (localStorage)
 │   │   ├── checkout.js           # Fluxo de finalização de pedido
+│   │   ├── services.js           # Serviços (CupomService, etc.)
 │   │   └── pedidos.js            # Consulta e rastreamento de pedidos
 │   │
 │   └── 📁 assets/                # Imagens, ícones e recursos estáticos
 │
 ├── 📁 server/                    # Backend Node.js
-│   ├── 📄 server.js              # Ponto de entrada — inicialização assíncrona
-│   │e2
+│   ├── 📄 app.js                 # App Express sem listen (compatível com Vercel)
+│   │
 │   ├── 📁 routes/
 │   │   ├── produtoRoutes.js      # CRUD de produtos (GET/POST/PUT/DELETE)
 │   │   ├── pedidoRoutes.js       # Pedidos (GET/POST/PATCH status)
-│   │   └── estoqueRoutes.js      # Estoque (GET/POST entrada/movimentações)
+│   │   ├── estoqueRoutes.js      # Estoque (GET/POST entrada/movimentações)
+│   │   └── cupomRoutes.js        # Cupons (GET/POST/PUT/DELETE + validar)
 │   │
 │   ├── 📁 controllers/
 │   │   ├── produtoController.js  # Lógica de negócio — produtos
 │   │   ├── pedidoController.js   # Lógica de negócio — pedidos + transações
-│   │   └── estoqueController.js  # Lógica de negócio — estoque
+│   │   ├── estoqueController.js  # Lógica de negócio — estoque
+│   │   └── cupomController.js    # Lógica de negócio — cupons
 │   │
 │   ├── 📁 models/
-│   │   └── db.js                 # Adaptador sql.js — interface com SQLite
+│   │   └── db.js                 # Adaptador PostgreSQL (pg) — interface com Supabase
 │   │
-│   └── 📁 config/                # Configurações do servidor
+│   ├── 📁 middleware/
+│   │   └── auth.js               # Verificação de JWT do Supabase (rotas admin)
+│   │
+│   └── 📁 config/
+│       └── database.js           # Configuração do pool de conexão PostgreSQL
+│
+├── 📁 supabase/
+│   ├── schema.sql                # DDL PostgreSQL — criação das tabelas e índices
+│   └── seed.sql                  # Dados iniciais (produtos reais do cardápio)
 │
 ├── 📁 database/
-│   ├── schema.sql                # DDL — criação das tabelas e índices
-│   ├── seed.sql                  # Dados iniciais (produtos de exemplo)
-│   └── terere.db                 # Arquivo do banco de dados SQLite
+│   ├── schema.sql                # Schema SQLite (referência histórica)
+│   └── seed.sql                  # Seed SQLite (referência histórica)
 │
-├── 📁 docs/                      # Documentação do projeto
+├── 📁 docs/                      # Documentação e assets do projeto
+├── 📄 vercel.json                # Configuração de deploy Vercel (serverless)
+├── 📄 .env.example               # Modelo de variáveis de ambiente
 ├── 📄 package.json               # Dependências e scripts npm
 ├── 📄 package-lock.json          # Lock file (versionamento exato)
 └── 📄 .gitignore                 # Arquivos ignorados pelo Git
@@ -208,7 +240,8 @@ SIte terere mix fotos/
 
 - **Node.js** `>= 18.0.0` — [Download](https://nodejs.org/)
 - **npm** `>= 9.0.0` (incluso com o Node.js)
-- Sistema operacional: Windows, macOS ou Linux
+- Conta no **Supabase** — [supabase.com](https://supabase.com)
+- Conta no **Vercel** — [vercel.com](https://vercel.com) (para deploy)
 
 > Verifique sua versão com:
 > ```bash
@@ -222,7 +255,7 @@ SIte terere mix fotos/
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/seu-usuario/terere-mix.git
+git clone https://github.com/Lucaschaves2023/terere-mix.git
 
 # 2. Acesse a pasta do projeto
 cd terere-mix
@@ -230,7 +263,15 @@ cd terere-mix
 # 3. Instale as dependências
 npm install
 
-# 4. Inicie o servidor de desenvolvimento
+# 4. Configure as variáveis de ambiente
+cp .env.example .env
+# Edite o .env com suas credenciais do Supabase
+
+# 5. Rode o schema no Supabase (SQL Editor)
+# Cole o conteúdo de supabase/schema.sql e execute
+# Cole o conteúdo de supabase/seed.sql e execute
+
+# 6. Inicie o servidor de desenvolvimento
 npm run dev
 ```
 
@@ -246,19 +287,27 @@ Pronto! Acesse **http://localhost:3000** no navegador. 🎉
 npm install
 ```
 
-### 2. Iniciar em modo desenvolvimento (com hot-reload)
+### 2. Configurar variáveis de ambiente
+
+Copie o `.env.example` para `.env` e preencha com suas credenciais do Supabase:
+
+```bash
+cp .env.example .env
+```
+
+### 3. Iniciar em modo desenvolvimento (com hot-reload)
 
 ```bash
 npm run dev
 ```
 
-### 3. Iniciar em modo produção
+### 4. Iniciar em modo produção
 
 ```bash
 npm start
 ```
 
-### 4. Acessar o sistema
+### 5. Acessar o sistema
 
 | Página | URL |
 |---|---|
@@ -266,6 +315,7 @@ npm start
 | 🍽️ Cardápio | http://localhost:3000/cardapio.html |
 | 🛒 Carrinho | http://localhost:3000/carrinho.html |
 | 📦 Pedidos | http://localhost:3000/pedidos.html |
+| 🔑 Login Admin | http://localhost:3000/admin-login.html |
 | ⚙️ Admin | http://localhost:3000/admin.html |
 | 🩺 API Health | http://localhost:3000/api/health |
 
@@ -284,29 +334,40 @@ npm start
 
 ### Base URL
 ```
+# Local
 http://localhost:3000/api
+
+# Produção
+https://terere-mix-2026.vercel.app/api
+```
+
+### 🔐 Autenticação
+
+Rotas de escrita exigem o header:
+```
+Authorization: Bearer <jwt-token-do-supabase>
 ```
 
 ### 📦 Produtos — `/api/produtos`
 
-| Método | Endpoint | Descrição |
-|---|---|---|
-| `GET` | `/api/produtos` | Lista todos os produtos ativos |
-| `GET` | `/api/produtos?categoria=X` | Filtra por categoria |
-| `GET` | `/api/produtos/:id` | Busca produto por ID |
-| `POST` | `/api/produtos` | Cria novo produto |
-| `PUT` | `/api/produtos/:id` | Atualiza produto existente |
-| `DELETE` | `/api/produtos/:id` | Desativa produto (soft delete) |
+| Método | Endpoint | Auth | Descrição |
+|---|---|---|---|
+| `GET` | `/api/produtos` | Público | Lista todos os produtos ativos |
+| `GET` | `/api/produtos?categoria=X` | Público | Filtra por categoria |
+| `GET` | `/api/produtos/:id` | Público | Busca produto por ID |
+| `POST` | `/api/produtos` | Admin | Cria novo produto |
+| `PUT` | `/api/produtos/:id` | Admin | Atualiza produto existente |
+| `DELETE` | `/api/produtos/:id` | Admin | Desativa produto (soft delete) |
 
 ### 🧾 Pedidos — `/api/pedidos`
 
-| Método | Endpoint | Descrição |
-|---|---|---|
-| `GET` | `/api/pedidos` | Lista pedidos (com filtros opcionais) |
-| `GET` | `/api/pedidos?status=pendente` | Filtra por status |
-| `GET` | `/api/pedidos/:id` | Busca pedido com itens |
-| `POST` | `/api/pedidos` | Cria novo pedido (com baixa de estoque) |
-| `PATCH` | `/api/pedidos/:id/status` | Atualiza status do pedido |
+| Método | Endpoint | Auth | Descrição |
+|---|---|---|---|
+| `GET` | `/api/pedidos` | Admin | Lista todos os pedidos |
+| `GET` | `/api/pedidos?status=pendente` | Admin | Filtra por status |
+| `GET` | `/api/pedidos/:id` | Público | Busca pedido com itens |
+| `POST` | `/api/pedidos` | Público | Cria novo pedido (com baixa de estoque) |
+| `PATCH` | `/api/pedidos/:id/status` | Admin | Atualiza status do pedido |
 
 **Status válidos:** `pendente` → `preparando` → `pronto` → `entregue` / `cancelado`
 
@@ -314,11 +375,21 @@ http://localhost:3000/api
 
 ### 📊 Estoque — `/api/estoque`
 
-| Método | Endpoint | Descrição |
-|---|---|---|
-| `GET` | `/api/estoque` | Lista produtos com saldo de estoque |
-| `POST` | `/api/estoque/entrada` | Registra entrada manual no estoque |
-| `GET` | `/api/estoque/movimentacoes` | Histórico de movimentações |
+| Método | Endpoint | Auth | Descrição |
+|---|---|---|---|
+| `GET` | `/api/estoque` | Admin | Lista produtos com saldo de estoque |
+| `POST` | `/api/estoque/entrada` | Admin | Registra entrada manual no estoque |
+| `GET` | `/api/estoque/movimentacoes` | Admin | Histórico de movimentações |
+
+### 🏷️ Cupons — `/api/cupons`
+
+| Método | Endpoint | Auth | Descrição |
+|---|---|---|---|
+| `GET` | `/api/cupons` | Admin | Lista todos os cupons |
+| `POST` | `/api/cupons/validar` | Público | Valida cupom no checkout |
+| `POST` | `/api/cupons` | Admin | Cria novo cupom |
+| `PUT` | `/api/cupons/:id` | Admin | Atualiza cupom |
+| `DELETE` | `/api/cupons/:id` | Admin | Remove cupom |
 
 ### 🩺 Health Check
 
@@ -330,69 +401,140 @@ http://localhost:3000/api
 
 ## 🗄️ Banco de Dados
 
-O banco de dados SQLite é composto por **4 tabelas principais**:
+O banco de dados PostgreSQL (Supabase) é composto por **5 tabelas**:
 
 ```sql
 -- Produtos cadastrados na loja
 CREATE TABLE produtos (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome       TEXT    NOT NULL,
-  descricao  TEXT,
-  preco      REAL    NOT NULL,
-  categoria  TEXT    NOT NULL DEFAULT 'Geral',
-  imagem     TEXT,
-  estoque    INTEGER NOT NULL DEFAULT 0,
-  ativo      INTEGER NOT NULL DEFAULT 1,  -- soft delete
-  criado_em  TEXT
+  id        BIGSERIAL     PRIMARY KEY,
+  nome      TEXT          NOT NULL,
+  descricao TEXT,
+  preco     NUMERIC(10,2) NOT NULL,
+  categoria TEXT          NOT NULL DEFAULT 'Geral',
+  imagem    TEXT,
+  estoque   INTEGER       NOT NULL DEFAULT 0,
+  ativo     BOOLEAN       NOT NULL DEFAULT true,
+  criado_em TIMESTAMPTZ   DEFAULT now()
 );
 
--- Pedidos realizados (online ou balcão)
+-- Pedidos realizados
 CREATE TABLE pedidos (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  tipo          TEXT NOT NULL,   -- 'online' | 'balcao'
-  status        TEXT NOT NULL,   -- 'pendente'|'preparando'|'pronto'|'entregue'|'cancelado'
-  nome_cliente  TEXT,
-  telefone      TEXT,
-  endereco      TEXT,
-  total         REAL NOT NULL,
-  observacao    TEXT,
-  criado_em     TEXT,
-  atualizado_em TEXT
+  id             BIGSERIAL     PRIMARY KEY,
+  tipo           TEXT          NOT NULL DEFAULT 'online',
+  status         TEXT          NOT NULL DEFAULT 'pendente',
+  nome_cliente   TEXT,
+  telefone       TEXT,
+  endereco       TEXT,
+  total          NUMERIC(10,2) NOT NULL,
+  coupon_code    TEXT,
+  payment_method TEXT,
+  criado_em      TIMESTAMPTZ   DEFAULT now(),
+  atualizado_em  TIMESTAMPTZ   DEFAULT now()
 );
 
 -- Itens de cada pedido
 CREATE TABLE itens_pedido (
-  pedido_id    INTEGER NOT NULL,
-  produto_id   INTEGER NOT NULL,
-  nome_produto TEXT NOT NULL,
-  preco_unit   REAL NOT NULL,
-  quantidade   INTEGER NOT NULL
+  id           BIGSERIAL     PRIMARY KEY,
+  pedido_id    BIGINT        NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
+  produto_id   BIGINT        NOT NULL REFERENCES produtos(id),
+  nome_produto TEXT          NOT NULL,
+  preco_unit   NUMERIC(10,2) NOT NULL,
+  quantidade   INTEGER       NOT NULL
 );
 
 -- Histórico de movimentações de estoque
 CREATE TABLE estoque_movimentacao (
-  produto_id INTEGER NOT NULL,
-  tipo       TEXT NOT NULL,  -- 'entrada' | 'saida'
-  quantidade INTEGER NOT NULL,
+  id         BIGSERIAL   PRIMARY KEY,
+  produto_id BIGINT      NOT NULL REFERENCES produtos(id),
+  tipo       TEXT        NOT NULL,
+  quantidade INTEGER     NOT NULL,
   motivo     TEXT,
-  criado_em  TEXT
+  criado_em  TIMESTAMPTZ DEFAULT now()
+);
+
+-- Cupons de desconto
+CREATE TABLE coupons (
+  id                  BIGSERIAL     PRIMARY KEY,
+  name                TEXT          NOT NULL,
+  code                TEXT          NOT NULL UNIQUE,
+  type                TEXT          NOT NULL DEFAULT 'percent',
+  percentage          NUMERIC(5,2),
+  fixed_amount        NUMERIC(10,2),
+  active              BOOLEAN       NOT NULL DEFAULT true,
+  expires_at          DATE,
+  usage_limit         INTEGER,
+  usage_count         INTEGER       NOT NULL DEFAULT 0,
+  minimum_order_value NUMERIC(10,2),
+  created_at          TIMESTAMPTZ   DEFAULT now()
 );
 ```
 
-> 📌 O banco é inicializado automaticamente na primeira execução. Para popular com dados de exemplo, os arquivos `database/schema.sql` e `database/seed.sql` estão disponíveis.
+> 📌 Para criar as tabelas no Supabase: **SQL Editor → New query** → cole `supabase/schema.sql` → Execute.
+> Para popular com os produtos do cardápio: repita com `supabase/seed.sql`.
 
 ---
 
 ## 🌍 Variáveis de Ambiente
 
-Crie um arquivo **`.env`** na raiz do projeto com as seguintes variáveis:
+Crie um arquivo **`.env`** na raiz do projeto baseado no `.env.example`:
 
 ```env
 # Porta do servidor HTTP (padrão: 3000)
 PORT=3000
+
+# Banco de Dados PostgreSQL (Supabase)
+# Supabase → Connect → Direct → Transaction pooler → URI
+DATABASE_URL=postgresql://postgres.SEU-PROJECT-REF:SUA-SENHA@aws-1-sa-east-1.pooler.supabase.com:6543/postgres
+
+# Supabase — chaves públicas
+# Supabase → Settings → API Keys → Publishable key
+SUPABASE_URL=https://SEU-PROJECT-REF.supabase.co
+SUPABASE_ANON_KEY=sb_publishable_...
+
+# Supabase — chave privada (NUNCA exponha no frontend ou no repositório)
+# Supabase → Settings → JWT Keys → JWT Secret
+SUPABASE_JWT_SECRET=...
 ```
 
-> 🔒 O arquivo `.env` está listado no `.gitignore` e **não deve ser versionado**.
+> 🔒 O arquivo `.env` está no `.gitignore` e **nunca deve ser versionado**.
+
+---
+
+## 🚢 Deploy
+
+O projeto está configurado para deploy automático na **Vercel** via `vercel.json`.
+
+### Configuração na Vercel
+
+1. Conecte o repositório GitHub na Vercel
+2. Em **Environment Variables**, adicione:
+   - `DATABASE_URL`
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `SUPABASE_JWT_SECRET`
+3. Clique em **Deploy**
+
+A cada `git push` na branch `main`, a Vercel faz o redeploy automaticamente.
+
+### Criar usuário admin
+
+Após o deploy, crie o usuário do painel no Supabase:
+**Authentication → Users → Add user → Create new user**
+
+---
+
+## 🌐 Páginas do Sistema
+
+| Página | URL Produção |
+|--------|-------------|
+| 🏠 Início | https://terere-mix-2026.vercel.app/index.html |
+| 🍽️ Cardápio | https://terere-mix-2026.vercel.app/cardapio.html |
+| 🛒 Carrinho | https://terere-mix-2026.vercel.app/carrinho.html |
+| 📦 Pedidos | https://terere-mix-2026.vercel.app/pedidos.html |
+| 🏪 Perfil da Loja | https://terere-mix-2026.vercel.app/perfil-loja.html |
+| 🔑 Login Admin | https://terere-mix-2026.vercel.app/admin-login.html |
+| ⚙️ Painel Admin | https://terere-mix-2026.vercel.app/admin.html |
+| 🩺 API Health | https://terere-mix-2026.vercel.app/api/health |
 
 ---
 
@@ -401,7 +543,7 @@ PORT=3000
 ### Criar um pedido via API
 
 ```bash
-curl -X POST http://localhost:3000/api/pedidos \
+curl -X POST https://terere-mix-2026.vercel.app/api/pedidos \
   -H "Content-Type: application/json" \
   -d '{
     "tipo": "online",
@@ -418,16 +560,18 @@ curl -X POST http://localhost:3000/api/pedidos \
 ### Atualizar status de um pedido
 
 ```bash
-curl -X PATCH http://localhost:3000/api/pedidos/1/status \
+curl -X PATCH https://terere-mix-2026.vercel.app/api/pedidos/1/status \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU-JWT" \
   -d '{ "status": "preparando" }'
 ```
 
 ### Registrar entrada de estoque
 
 ```bash
-curl -X POST http://localhost:3000/api/estoque/entrada \
+curl -X POST https://terere-mix-2026.vercel.app/api/estoque/entrada \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU-JWT" \
   -d '{
     "produto_id": 1,
     "quantidade": 50,
@@ -435,34 +579,26 @@ curl -X POST http://localhost:3000/api/estoque/entrada \
   }'
 ```
 
-### Listar pedidos pendentes
-
-```bash
-curl http://localhost:3000/api/pedidos?status=pendente
-```
-
 ---
 
 ## 🔮 Melhorias Futuras
 
-- [ ] 🔐 **Autenticação** — Sistema de login para o painel administrativo (JWT/sessão)
 - [ ] 📱 **PWA** — Transformar o frontend em Progressive Web App para instalação mobile
 - [ ] 🔔 **Notificações em Tempo Real** — WebSocket ou SSE para atualização automática de pedidos no admin
 - [ ] 💳 **Integração de Pagamento** — Suporte ao Pix via API do Mercado Pago ou Stripe
 - [ ] 📊 **Relatórios** — Dashboard com gráficos de vendas, produtos mais pedidos e faturamento
-- [ ] 🐳 **Docker** — Containerização para facilitar implantação em produção
-- [ ] 🌐 **Deploy em Nuvem** — Configuração para Railway, Render ou VPS
+- [ ] 🐳 **Docker** — Containerização para facilitar desenvolvimento local sem dependências externas
 - [ ] 🧪 **Testes Automatizados** — Cobertura com Jest para controllers e rotas
-- [ ] 📸 **Upload de Imagens** — Integração com Cloudinary ou S3 para fotos dos produtos
-- [ ] 🗃️ **Migração para PostgreSQL** — Para ambientes de produção com maior volume de dados
+- [ ] 📸 **Upload de Imagens** — Integração com Supabase Storage para fotos dos produtos
+- [ ] 🔒 **RLS no Supabase** — Row Level Security para camada extra de proteção no banco
 
 ---
 
 ## 👤 Autor
 
-Desenvolvido com ☕ e 🧉 por **T14s**
+Desenvolvido com ☕ e 🧉 por **Lucas Chaves**
 
-- 📧 Entre em contato via [GitHub Issues](https://github.com/seu-usuario/terere-mix/issues)
+- 📧 Entre em contato via [GitHub Issues](https://github.com/Lucaschaves2023/terere-mix/issues)
 
 ---
 

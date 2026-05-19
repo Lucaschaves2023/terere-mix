@@ -20,6 +20,11 @@ app.use(express.urlencoded({ extended: true }));
 // ── Servir frontend estático (/client) ────────
 app.use(express.static(path.join(__dirname, '..', 'client')));
 
+// ── Redireciona / para index.html ─────────────
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'client', 'index.html'));
+});
+
 // ── Rota pública: chaves do Supabase ──────────
 // Expõe apenas as chaves PÚBLICAS (URL e anon key).
 // DATABASE_URL e SUPABASE_JWT_SECRET NUNCA aparecem aqui.
