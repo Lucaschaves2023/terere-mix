@@ -17,7 +17,8 @@ async function listar(req, res) {
     const produtos = await db.all(sql, params);
     res.json({ success: true, data: produtos });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[produtos.listar]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -28,7 +29,8 @@ async function buscarPorId(req, res) {
     if (!produto) return res.status(404).json({ success: false, message: 'Produto não encontrado.' });
     res.json({ success: true, data: produto });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[produtos.buscarPorId]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -46,7 +48,8 @@ async function criar(req, res) {
     const novo = await db.get('SELECT * FROM produtos WHERE id = ?', [lastInsertRowid]);
     res.status(201).json({ success: true, data: novo });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[produtos.criar]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -84,7 +87,8 @@ async function atualizar(req, res) {
     const atualizado = await db.get('SELECT * FROM produtos WHERE id = ?', [req.params.id]);
     res.json({ success: true, data: atualizado });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[produtos.atualizar]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -96,7 +100,8 @@ async function desativar(req, res) {
     await db.exec('UPDATE produtos SET ativo = false WHERE id = ?', [req.params.id]);
     res.json({ success: true, message: 'Produto desativado com sucesso.' });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[produtos.desativar]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 

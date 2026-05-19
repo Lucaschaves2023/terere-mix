@@ -22,7 +22,8 @@ async function listar(req, res) {
     const promocoes = await db.all(sql, []);
     res.json({ success: true, data: promocoes });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[promocoes]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -63,7 +64,8 @@ async function criar(req, res) {
     const novo = await db.get('SELECT * FROM promocoes WHERE id = ?', [lastInsertRowid]);
     res.status(201).json({ success: true, data: novo });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[promocoes]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -111,7 +113,8 @@ async function atualizar(req, res) {
     const atualizado = await db.get('SELECT * FROM promocoes WHERE id = ?', [req.params.id]);
     res.json({ success: true, data: atualizado });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[promocoes]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -124,7 +127,8 @@ async function excluir(req, res) {
     await db.exec('DELETE FROM promocoes WHERE id = ?', [req.params.id]);
     res.json({ success: true, message: 'Promoção excluída.' });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[promocoes]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 

@@ -41,6 +41,16 @@ function fmtBRL(v) {
   return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function fmtData(str) {
   if (!str) return '';
   const d = new Date(str.replace(' ', 'T'));
@@ -58,7 +68,7 @@ function orderCardHTML(p) {
   try {
     const itens = Array.isArray(p.itens) ? p.itens : (p.itens ? JSON.parse(p.itens) : []);
     if (itens && itens.length > 0) {
-      resumoItens = itens.slice(0, 3).map(i => `${i.quantidade}× ${i.nome_produto}`).join(', ');
+      resumoItens = itens.slice(0, 3).map(i => `${i.quantidade}× ${escapeHTML(i.nome_produto)}`).join(', ');
       if (itens.length > 3) resumoItens += ` e mais ${itens.length - 3}...`;
     }
   } catch {}

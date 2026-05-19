@@ -18,7 +18,8 @@ async function listar(req, res) {
     const pedidos = await db.all(sql, params);
     res.json({ success: true, data: pedidos });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[pedidos.listar]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -30,7 +31,8 @@ async function buscarPorId(req, res) {
     const itens = await db.all('SELECT * FROM itens_pedido WHERE pedido_id = ?', [req.params.id]);
     res.json({ success: true, data: { ...pedido, itens } });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[pedidos.buscarPorId]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -139,8 +141,14 @@ async function criar(req, res) {
 
     res.status(201).json({ success: true, data: { ...pedido, itens: itensSalvos } });
   } catch (err) {
-    const status = err.message.includes('insuficiente') ? 409 : 500;
-    res.status(status).json({ success: false, message: err.message });
+    // Erros de negócio (estoque, produto) são expostos; erros internos são genéricos
+    const isBusiness = /insuficiente|não encontrado|não ativo/i.test(err.message);
+    const status = err.message.includes('insuficiente') ? 409 : (isBusiness ? 400 : 500);
+    if (!isBusiness) console.error('[pedidos.criar]', err.message);
+    res.status(status).json({
+      success: false,
+      message: isBusiness ? err.message : 'Erro interno do servidor.',
+    });
   }
 }
 
@@ -184,7 +192,8 @@ async function atualizarStatus(req, res) {
     const atualizado = await db.get('SELECT * FROM pedidos WHERE id = ?', [req.params.id]);
     res.json({ success: true, data: atualizado });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[pedidos.atualizarStatus]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -219,7 +228,8 @@ async function meusPedidos(req, res) {
 
     res.json({ success: true, data: pedidos });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[pedidos.meusPedidos]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -241,7 +251,8 @@ async function getClientes(req, res) {
     );
     res.json({ success: true, data: clientes });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[pedidos.getClientes]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 

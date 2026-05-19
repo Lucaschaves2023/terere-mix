@@ -6,16 +6,56 @@
 
 require('dotenv').config();
 
-const express = require('express');
-const cors    = require('cors');
-const path    = require('path');
+const express   = require('express');
+const cors      = require('cors');
+const helmet    = require('helmet');
+const rateLimit = require('express-rate-limit');
+const path      = require('path');
 
 const app = express();
 
+// ── Segurança: headers HTTP ───────────────────
+app.use(helmet({
+  contentSecurityPolicy: false, // assets inline e CDN — evita quebrar o frontend
+  crossOriginEmbedderPolicy: false,
+}));
+
+// ── CORS: apenas origem conhecida ─────────────
+const _extraOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(o => o.trim()).filter(Boolean);
+
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin) return cb(null, true); // curl / mobile / SSR
+    const ok =
+      origin.includes('localhost') ||
+      origin.endsWith('.vercel.app') ||
+      _extraOrigins.includes(origin);
+    cb(ok ? null : new Error('Origem não permitida'), ok);
+  },
+  credentials: false,
+}));
+
+// ── Rate limiting — rotas públicas sensíveis ──
+const _publicLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Muitas requisições. Tente novamente em alguns minutos.' },
+});
+
+const _loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Muitas tentativas. Aguarde 15 minutos.' },
+});
+
 // ── Middleware ────────────────────────────────
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // ── Servir frontend estático (/client) ────────
 app.use(express.static(path.join(__dirname, '..', 'client')));
@@ -61,12 +101,12 @@ app.use('/api/produtos', (req, res, next) => {
 }, produtoRoutes);
 
 // Pedidos:
-//   POST /api/pedidos        → público (cliente finaliza pedido)
+//   POST /api/pedidos        → público (cliente finaliza pedido) com rate limit
 //   GET  /api/pedidos/:id    → público (cliente rastreia pedido)
 //   GET  /api/pedidos        → admin (lista todos)
 //   PATCH /api/pedidos/:id/* → admin (atualiza status)
 app.use('/api/pedidos', (req, res, next) => {
-  if (req.method === 'POST') return next();
+  if (req.method === 'POST') return _publicLimiter(req, res, next);
   if (req.method === 'GET' && /^\/\d+$/.test(req.path)) return next();
   requireAdmin(req, res, next);
 }, pedidoRoutes);
@@ -75,10 +115,10 @@ app.use('/api/pedidos', (req, res, next) => {
 app.use('/api/estoque', requireAdmin, estoqueRoutes);
 
 // Cupons:
-//   POST /api/cupons/validar → público (checkout valida cupom)
+//   POST /api/cupons/validar → público com rate limit (evita brute-force)
 //   Restante                 → admin (CRUD)
 app.use('/api/cupons', (req, res, next) => {
-  if (req.method === 'POST' && req.path === '/validar') return next();
+  if (req.method === 'POST' && req.path === '/validar') return _publicLimiter(req, res, next);
   requireAdmin(req, res, next);
 }, cupomRoutes);
 
@@ -95,7 +135,7 @@ app.use('/api/promocoes', (req, res, next) => {
 }, promocaoRoutes);
 
 // Meus pedidos (público — filtra por WhatsApp)
-app.get('/api/meus-pedidos', require('./controllers/pedidoController').meusPedidos);
+app.get('/api/meus-pedidos', _publicLimiter, require('./controllers/pedidoController').meusPedidos);
 
 // Clientes (admin — lista clientes únicos extraídos dos pedidos)
 app.get('/api/admin/clientes', requireAdmin, require('./controllers/pedidoController').getClientes);
@@ -110,9 +150,9 @@ app.use('/api/{*path}', (req, res) => {
   res.status(404).json({ success: false, message: 'Rota não encontrada.' });
 });
 
-// Error handler global
+// Error handler global — nunca expõe detalhes internos
 app.use((err, req, res, _next) => {
-  console.error('[ERRO]', err.message);
+  console.error('[ERRO]', err.stack || err.message);
   res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
 });
 

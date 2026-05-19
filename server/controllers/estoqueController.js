@@ -12,7 +12,8 @@ async function listar(req, res) {
     );
     res.json({ success: true, data: produtos });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[estoque.listar]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -40,7 +41,8 @@ async function registrarEntrada(req, res) {
     const atualizado = await db.get('SELECT id, nome, estoque FROM produtos WHERE id = ?', [produto_id]);
     res.json({ success: true, data: atualizado });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[estoque.registrarEntrada]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -61,7 +63,8 @@ async function listarMovimentacoes(req, res) {
     const movs = await db.all(sql, params);
     res.json({ success: true, data: movs });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[estoque.listarMovimentacoes]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 

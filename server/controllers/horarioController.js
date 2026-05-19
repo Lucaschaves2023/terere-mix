@@ -31,7 +31,8 @@ async function listar(req, res) {
     const dados = horarios.map(h => ({ ...h, nome_dia: NOMES_DIA[h.dia_semana] }));
     res.json({ success: true, data: dados });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[horarios]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -59,7 +60,8 @@ async function atualizar(req, res) {
       data: updated.map(h => ({ ...h, nome_dia: NOMES_DIA[h.dia_semana] })),
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[horarios]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 

@@ -28,7 +28,8 @@ async function listar(req, res) {
     const coupons = await db.all(sql, params);
     res.json({ success: true, data: coupons });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[cupons.listar]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -39,7 +40,8 @@ async function buscarPorId(req, res) {
     if (!coupon) return res.status(404).json({ success: false, message: 'Cupom não encontrado.' });
     res.json({ success: true, data: coupon });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[cupons.buscarPorId]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -85,7 +87,8 @@ async function validar(req, res) {
 
     res.json({ success: true, data: { valido: true, cupom: cupomObj } });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[cupons.validar]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -139,7 +142,8 @@ async function criar(req, res) {
     const coupon = await db.get('SELECT * FROM coupons WHERE id = ?', [lastInsertRowid]);
     res.status(201).json({ success: true, data: coupon });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[cupons.criar]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -184,7 +188,8 @@ async function atualizar(req, res) {
     const updated = await db.get('SELECT * FROM coupons WHERE id = ?', [req.params.id]);
     res.json({ success: true, data: updated });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[cupons.atualizar]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 
@@ -194,9 +199,10 @@ async function excluir(req, res) {
     const coupon = await db.get('SELECT id, code FROM coupons WHERE id = ?', [req.params.id]);
     if (!coupon) return res.status(404).json({ success: false, message: 'Cupom não encontrado.' });
     await db.exec('DELETE FROM coupons WHERE id = ?', [req.params.id]);
-    res.json({ success: true, message: `Cupom "${coupon.code}" excluído.` });
+    res.json({ success: true, message: `Cupom excluído.` });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[cupons.excluir]', err.message);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 

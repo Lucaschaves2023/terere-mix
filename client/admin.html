@@ -2030,8 +2030,19 @@
     });
 
     async function _uploadImagemSupabase(file) {
+      const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      const LIMITE_MB = 5;
+
+      if (!TIPOS_PERMITIDOS.includes(file.type)) {
+        throw new Error('Tipo de arquivo inválido. Use JPEG, PNG, WebP ou GIF.');
+      }
+      if (file.size > LIMITE_MB * 1024 * 1024) {
+        throw new Error(`Arquivo muito grande. Máximo: ${LIMITE_MB} MB.`);
+      }
+
       const supabase = window.AdminAuth?._supabase;
       if (!supabase) throw new Error('Supabase não configurado. Configure SUPABASE_URL e SUPABASE_ANON_KEY.');
+
       const ext      = file.name.split('.').pop().toLowerCase();
       const filename = `produto-${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from('produtos').upload(filename, file, { upsert: true });

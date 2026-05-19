@@ -132,9 +132,19 @@ function fmtHora(hhmm) {
   return hhmm.replace(':', 'h');
 }
 
-/* ── Helpers de formatação ────────────────── */
+/* ── Helpers de formatação e segurança ───── */
 function fmtBRL(value) {
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function produtoCardHTML(p, variant = 'grid') {
@@ -146,16 +156,16 @@ function produtoCardHTML(p, variant = 'grid') {
       <article class="product-card ${p.estoque === 0 ? 'product-card--esgotado' : ''}"
                id="product-${p.id}"
                data-product-id="${p.id}"
-               data-product-name="${p.nome}"
+               data-product-name="${escapeHTML(p.nome)}"
                data-product-price="${p.preco}"
-               data-product-image="${p.imagem || ''}">
+               data-product-image="${escapeHTML(p.imagem || '')}">
         ${estoqueBadge}
-        <img src="${p.imagem || 'assets/images/terere-mix.png'}"
-             alt="${p.nome}" class="product-card__image" loading="lazy">
+        <img src="${escapeHTML(p.imagem || 'assets/images/terere-mix.png')}"
+             alt="${escapeHTML(p.nome)}" class="product-card__image" loading="lazy">
         <button class="btn-add-cart" data-add-to-cart
-                aria-label="Adicionar ${p.nome}"
+                aria-label="Adicionar ${escapeHTML(p.nome)}"
                 ${p.estoque === 0 ? 'disabled' : ''}>+</button>
-        <p class="product-card__name">${p.nome}</p>
+        <p class="product-card__name">${escapeHTML(p.nome)}</p>
         <p class="product-card__price">${fmtBRL(p.preco)}</p>
       </article>`;
   }
@@ -165,18 +175,18 @@ function produtoCardHTML(p, variant = 'grid') {
     <article class="menu-item ${p.estoque === 0 ? 'product-card--esgotado' : ''}"
              id="item-${p.id}"
              data-product-id="${p.id}"
-             data-product-name="${p.nome}"
+             data-product-name="${escapeHTML(p.nome)}"
              data-product-price="${p.preco}"
-             data-product-image="${p.imagem || ''}">
+             data-product-image="${escapeHTML(p.imagem || '')}">
       <div class="menu-item__info">
-        <p class="menu-item__name">${p.nome}</p>
-        ${p.descricao ? `<p class="menu-item__desc">${p.descricao}</p>` : ''}
+        <p class="menu-item__name">${escapeHTML(p.nome)}</p>
+        ${p.descricao ? `<p class="menu-item__desc">${escapeHTML(p.descricao)}</p>` : ''}
         <p class="menu-item__price">${fmtBRL(p.preco)}</p>
       </div>
-      <img src="${p.imagem || 'assets/images/terere-mix.png'}"
-           alt="${p.nome}" class="menu-item__image" loading="lazy">
+      <img src="${escapeHTML(p.imagem || 'assets/images/terere-mix.png')}"
+           alt="${escapeHTML(p.nome)}" class="menu-item__image" loading="lazy">
       <button class="btn-add-cart" data-add-to-cart
-              aria-label="Adicionar ${p.nome}"
+              aria-label="Adicionar ${escapeHTML(p.nome)}"
               ${p.estoque === 0 ? 'disabled' : ''}>+</button>
     </article>`;
 }
@@ -221,7 +231,7 @@ async function renderReordenar() {
     section.style.display = '';
     wrapper.innerHTML = recentes.map(p => {
       const itens = Array.isArray(p.itens) ? p.itens : [];
-      const resumo = itens.slice(0, 2).map(i => `<span>${i.quantidade}</span> ${i.nome_produto}`).join('<br>');
+      const resumo = itens.slice(0, 2).map(i => `<span>${i.quantidade}</span> ${escapeHTML(i.nome_produto)}`).join('<br>');
       const itensData = encodeURIComponent(JSON.stringify(
         itens.map(i => ({
           id:    String(i.produto_id),
