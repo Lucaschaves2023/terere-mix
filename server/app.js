@@ -20,9 +20,17 @@ app.use(express.urlencoded({ extended: true }));
 // ── Servir frontend estático (/client) ────────
 app.use(express.static(path.join(__dirname, '..', 'client')));
 
-// ── Redireciona / para index.html ─────────────
+// ── URLs limpas (sem .html) ───────────────────
+// Ex: /cardapio → /client/cardapio.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'client', 'index.html'));
+});
+
+app.get('/:page', (req, res, next) => {
+  const { page } = req.params;
+  if (page.includes('.') || page.startsWith('api')) return next();
+  const file = path.join(__dirname, '..', 'client', `${page}.html`);
+  res.sendFile(file, err => { if (err) next(); });
 });
 
 // ── Rota pública: chaves do Supabase ──────────
