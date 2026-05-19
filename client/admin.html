@@ -2029,6 +2029,7 @@
       reader.readAsDataURL(file);
     });
 
+    // Retorna { url, filename } para permitir rollback e limpeza
     async function _uploadImagemSupabase(file) {
       const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
       const LIMITE_MB = 5;
@@ -2041,14 +2042,45 @@
       }
 
       const supabase = window.AdminAuth?._supabase;
-      if (!supabase) throw new Error('Supabase não configurado. Configure SUPABASE_URL e SUPABASE_ANON_KEY.');
+      if (!supabase) throw new Error('Supabase não configurado.');
 
       const ext      = file.name.split('.').pop().toLowerCase();
-      const filename = `produto-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from('produtos').upload(filename, file, { upsert: true });
-      if (error) throw new Error(`Upload falhou: ${error.message}`);
+      const rand     = Math.random().toString(36).slice(2, 8);
+      const filename = `produto-${Date.now()}-${rand}.${ext}`;
+
+      const { error } = await supabase.storage.from('produtos').upload(filename, file, {
+        upsert: false,
+        cacheControl: '3600',
+      });
+
+      if (error) {
+        // Mensagens amigáveis para erros conhecidos do Storage
+        if (error.message?.includes('Bucket not found'))
+          throw new Error('Bucket de imagens não encontrado. Configure o bucket "produtos" no Supabase.');
+        if (error.message?.includes('not authorized') || error.statusCode === 403)
+          throw new Error('Sem permissão para fazer upload. Verifique se está logado como admin.');
+        if (error.message?.includes('Payload too large') || error.statusCode === 413)
+          throw new Error(`Arquivo muito grande. Máximo: ${LIMITE_MB} MB.`);
+        throw new Error(`Upload falhou: ${error.message}`);
+      }
+
       const { data: urlData } = supabase.storage.from('produtos').getPublicUrl(filename);
-      return urlData.publicUrl;
+      return { url: urlData.publicUrl, filename };
+    }
+
+    // Extrai o filename de uma URL do Supabase Storage para permitir exclusão
+    function _extrairFilenameStorage(url) {
+      if (!url || !url.includes('/storage/v1/object/public/produtos/')) return null;
+      return url.split('/storage/v1/object/public/produtos/').pop().split('?')[0];
+    }
+
+    // Tenta remover arquivo do Storage silenciosamente (falha não interrompe o fluxo)
+    async function _removerDoStorage(filename) {
+      if (!filename) return;
+      try {
+        const supabase = window.AdminAuth?._supabase;
+        if (supabase) await supabase.storage.from('produtos').remove([filename]);
+      } catch { /* silencioso — limpeza é melhor-esforço */ }
     }
 
     document.getElementById('form-produto').addEventListener('submit', async e => {
@@ -2061,17 +2093,28 @@
       btn.disabled = true;
       btn.textContent = 'Salvando...';
 
-      try {
-        let imagemFinal = urlEl.value.trim() || null;
+      // Guarda imagem anterior (para limpeza após sucesso ou rollback)
+      const imagemAnterior = urlEl.value.trim() || null;
+      let imagemFinal      = imagemAnterior;
+      let novoFilename     = null; // nome do arquivo recém-enviado (para rollback)
 
-        // Upload via Supabase Storage se tiver arquivo selecionado
+      try {
+        // Upload se selecionou arquivo novo
         if (fileEl.files && fileEl.files[0]) {
           try {
-            imagemFinal = await _uploadImagemSupabase(fileEl.files[0]);
+            btn.textContent = 'Enviando imagem...';
+            const resultado = await _uploadImagemSupabase(fileEl.files[0]);
+            imagemFinal  = resultado.url;
+            novoFilename = resultado.filename;
+            // Atualiza preview imediatamente com a URL definitiva do Storage
+            _atualizarPreviewImagem(imagemFinal);
           } catch (upErr) {
-            toast(upErr.message + ' — imagem não enviada.', 'error');
+            toast(upErr.message + ' — imagem não enviada, mantendo a anterior.', 'error');
+            // imagemFinal continua com a URL anterior — banco não será alterado
           }
         }
+
+        btn.textContent = 'Salvando...';
 
         const payload = {
           nome:      document.getElementById('produto-nome').value.trim(),
@@ -2086,9 +2129,20 @@
         if (id) { await API.atualizarProduto(id, payload); toast('Produto atualizado!'); }
         else    { await API.criarProduto(payload);          toast('Produto criado!'); }
 
+        // Banco salvo com sucesso → remove imagem antiga do Storage (se era do Supabase e mudou)
+        if (novoFilename && imagemAnterior && imagemAnterior !== imagemFinal) {
+          const filenameAntigo = _extrairFilenameStorage(imagemAnterior);
+          if (filenameAntigo) await _removerDoStorage(filenameAntigo);
+        }
+
         document.getElementById('modal-produto').classList.remove('open');
         await loadProdutos();
       } catch (err) {
+        // Banco falhou após upload → rollback do Storage para evitar arquivo órfão
+        if (novoFilename) {
+          await _removerDoStorage(novoFilename);
+          _atualizarPreviewImagem(imagemAnterior || '');
+        }
         toast(err.message, 'error');
       } finally {
         btn.disabled = false;
