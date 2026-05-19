@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tereré Mix - Detalhes completos do seu pedido.">
+  <title>Tereré Mix - Detalhes do Pedido</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- ═══ Page Header ═══ -->
+    <header class="page-header" id="detalhes-header">
+      <a href="pedidos.html" class="page-header__back" id="btn-back-detalhes" aria-label="Voltar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </a>
+      <h1 class="page-header__title">Detalhes do pedido</h1>
+    </header>
+
+    <!-- ═══ Conteúdo dinâmico ═══ -->
+    <div id="detail-container">
+      <div style="padding:2rem;text-align:center;color:var(--color-gray-500);">
+        <p style="font-size:.85rem;">Carregando detalhes...</p>
+      </div>
+    </div>
+
+    <!-- ═══ Bottom Navigation ═══ -->
+    <nav class="bottom-nav" id="bottom-nav" aria-label="Navegação principal">
+      <a href="index.html" class="bottom-nav__item" id="nav-home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Início</span>
+      </a>
+      <a href="pedidos.html" class="bottom-nav__item bottom-nav__item--active" id="nav-orders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span>Pedidos</span>
+      </a>
+      <a href="carrinho.html" class="bottom-nav__item" id="nav-cart">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span class="cart-badge" hidden>0</span>
+        <span>Carrinho</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <script src="js/cart.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    /* ── Carrega detalhes do pedido por ?id= ── */
+    const STATUS_LABEL = {
+      pendente:'Aguardando', preparando:'Preparando',
+      pronto:'Pronto!', entregue:'Entregue', cancelado:'Cancelado'
+    };
+    const STATUS_CLASS = {
+      pendente:'status-badge--pending', preparando:'status-badge--preparing',
+      pronto:'status-badge--ready', entregue:'status-badge--done', cancelado:'status-badge--cancelled'
+    };
+    function fmtBRL(v){
+      return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    }
+    function fmtData(str){
+      if(!str) return '';
+      const d = new Date(str.replace(' ','T'));
+      return isNaN(d) ? str
+        : `Em ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+    }
+    document.addEventListener('DOMContentLoaded', async () => {
+      const container = document.getElementById('detail-container');
+      const id = new URLSearchParams(window.location.search).get('id');
+      if (!id) {
+        container.innerHTML = `<p style="padding:2rem;color:var(--color-danger);">Pedido não informado na URL. Use ?id=NUMERO</p>`;
+        return;
+      }
+      try {
+        const p = await API.getPedido(id);
+        const sl = STATUS_LABEL[p.status] || p.status;
+        const sc = STATUS_CLASS[p.status] || '';
+        
+        container.innerHTML = `
+          <div class="detail-header" id="detail-info" style="flex-direction: column; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+              <div>
+                <p class="detail-header__number">Pedido #${p.id}</p>
+                <p class="detail-header__date">${fmtData(p.criado_em)}</p>
+              </div>
+              <button class="btn-repeat" onclick="window.location.href='index.html'">Repetir pedido</button>
+            </div>
+            <span class="status-badge ${sc}">${sl}</span>
+          </div>
+
+          ${ p.nome_cliente ? `
+          <div class="section-header">Cliente</div>
+          <div class="detail-row"><span class="detail-row__value">${p.nome_cliente}</span></div>
+          ` : '' }
+
+          ${ p.tipo === 'online' && p.endereco ? `
+          <div class="section-header">Endereço de entrega</div>
+          <div class="detail-row"><span class="detail-row__value">${p.endereco}</span></div>
+          ` : `
+          <div class="section-header">Forma de retirada</div>
+          <div class="detail-row"><span class="detail-row__value">Balcão / Retirada</span></div>
+          ` }
+
+          <div class="section-header">Itens do pedido</div>
+          ${ (p.itens||[]).map(item => {
+            const imgSrc = item.imagem || 'https://via.placeholder.com/50';
+            return `
+            <div class="order-item-row">
+              <img src="${imgSrc}" alt="${item.nome_produto}" class="order-item-row__image">
+              <div class="order-item-row__info">
+                <p class="order-item-row__name">${item.quantidade}x ${item.nome_produto}</p>
+                <p class="order-item-row__price order-item-row__price--blue">${fmtBRL(item.preco_unit * item.quantidade)}</p>
+              </div>
+            </div>
+            `;
+          }).join('') }
+
+          ${ p.observacao ? `
+          <div class="section-header">Observações</div>
+          <div class="detail-row"><span class="detail-row__value">${p.observacao}</span></div>
+          ` : '' }
+
+          <div class="totals-section">
+            <div class="total-row total-row--subtotal">
+              <span>Subtotal</span>
+              <span>${fmtBRL(p.total)}</span>
+            </div>
+            <div class="total-row total-row--total">
+              <span>Total</span>
+              <span>${fmtBRL(p.total)}</span>
+            </div>
+          </div>
+        `;
+      } catch(err) {
+        container.innerHTML = `<p style="padding:2rem;color:var(--color-danger);">Erro: ${err.message}</p>`;
+      }
+    });
+  </script>
+  <style>
+    .status-badge--pending   {background:#fff3cd;color:#856404;}
+    .status-badge--preparing {background:#cce5ff;color:#004085;}
+    .status-badge--ready     {background:#d4edda;color:#155724;}
+    .status-badge--done      {background:#e2e3e5;color:#383d41;}
+    .status-badge--cancelled {background:#f8d7da;color:#721c24;}
+
+    /* Ajustes Finos Baseados na Referência Visual */
+    .btn-repeat {
+      background-color: #2196F3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-repeat:hover {
+      background-color: #1976D2;
+    }
+    
+    .order-item-row__price--blue {
+      color: #2196F3 !important;
+      font-weight: 700 !important;
+      font-size: 1rem !important;
+    }
+
+    .totals-section {
+      padding: 0 var(--space-lg);
+      margin-bottom: 2rem;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+    }
+    .total-row--subtotal {
+      color: var(--color-gray-600);
+      font-size: 0.95rem;
+      border-top: 1px solid var(--color-border-light);
+    }
+    .total-row--total {
+      color: #000;
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+  </style>
+</body>
+</html>

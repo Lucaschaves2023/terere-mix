@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tereré Mix — Painel Administrativo. Gerencie pedidos, produtos e estoque.">
+  <title>Tereré Mix — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Supabase JS — necessário para admin-auth.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ═══ Reset & Base ══════════════════════════════ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: rgba(255, 255, 255, .07);
+      --primary: #2ecc71;
+      --primary-d: #2ecc71;
+      --green: #2ecc71;
+      --yellow: #f39c12;
+      --red: #e74c3c;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, .4);
+    }
+
+    html {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ═══ Layout ════════════════════════════════════ */
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 100;
+    }
+
+    .sidebar__brand {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar__logo {
+      font-size: 1.25rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary) 0%, #7b61ff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar__sub {
+      font-size: .7rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .sidebar__nav {
+      padding: 12px 0;
+      flex: 1;
+    }
+
+    .sidebar__link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 20px;
+      font-size: .875rem;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all .2s;
+      border-radius: 0;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .sidebar__link:hover,
+    .sidebar__link.active {
+      color: var(--text);
+      background: rgba(11, 61, 46, .1);
+      border-right: 3px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .sidebar__link svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .sidebar__footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    /* Main content */
+    .main-content {
+      margin-left: 240px;
+      flex: 1;
+      padding: 28px 32px;
+      min-height: 100vh;
+    }
+
+    /* Topbar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .topbar__title {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .topbar__actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* Stats cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card__label {
+      font-size: .75rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .stat-card__value {
+      font-size: 1.75rem;
+      font-weight: 800;
+    }
+
+    .stat-card__sub {
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    .stat-card--green .stat-card__value {
+      color: var(--green);
+    }
+
+    .stat-card--yellow .stat-card__value {
+      color: var(--yellow);
+    }
+
+    .stat-card--primary .stat-card__value {
+      color: var(--primary);
+    }
+
+    .stat-card--red .stat-card__value {
+      color: var(--red);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 4px;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-size: .875rem;
+      font-weight: 500;
+      transition: all .2s;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(11, 61, 46, .4);
+    }
+
+    /* Tab panels */
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Card container */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card__title {
+      font-size: .9rem;
+      font-weight: 700;
+    }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, .02);
+    }
+
+    /* Status badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: .72rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge--pendente {
+      background: rgba(243, 156, 18, .15);
+      color: #f39c12;
+    }
+
+    .badge--preparando {
+      background: rgba(11, 61, 46, .15);
+      color: #0B3D2E;
+    }
+
+    .badge--pronto {
+      background: rgba(46, 204, 113, .15);
+      color: #2ecc71;
+    }
+
+    .badge--entregue {
+      background: rgba(148, 163, 184, .15);
+      color: #94a3b8;
+    }
+
+    .badge--cancelado {
+      background: rgba(231, 76, 60, .15);
+      color: #e74c3c;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: .825rem;
+      font-weight: 600;
+      transition: all .2s;
+    }
+
+    .btn--primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn--primary:hover {
+      background: var(--primary-d);
+    }
+
+    .btn--ghost {
+      background: rgba(255, 255, 255, .06);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn--ghost:hover {
+      background: rgba(255, 255, 255, .1);
+    }
+
+    .btn--danger {
+      background: rgba(231, 76, 60, .15);
+      color: var(--red);
+      border: 1px solid rgba(231, 76, 60, .2);
+    }
+
+    .btn--danger:hover {
+      background: rgba(231, 76, 60, .25);
+    }
+
+    .btn--sm {
+      padding: 5px 10px;
+      font-size: .75rem;
+    }
+
+    .btn--success {
+      background: rgba(46, 204, 113, .15);
+      color: var(--green);
+      border: 1px solid rgba(46, 204, 113, .2);
+    }
+
+    .btn--success:hover {
+      background: rgba(46, 204, 113, .25);
+    }
+
+    /* Status select */
+    .status-select {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: .8rem;
+      font-family: inherit;
+    }
+
+    /* Forms */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: .875rem;
+      font-family: inherit;
+      transition: border-color .2s;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      justify-content: flex-end;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      width: 480px;
+      max-width: 95vw;
+      transform: scale(.95);
+      transition: transform .25s;
+    }
+
+    .modal-overlay.open .modal {
+      transform: scale(1);
+    }
+
+    .modal__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal__title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .modal__close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal__close:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    /* Estoque alerts */
+    .estoque-low {
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .estoque-ok {
+      color: var(--green);
+    }
+
+    /* Skeleton / loading */
+    .skeleton {
+      height: 44px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0
+      }
+
+      100% {
+        background-position: -200% 0
+      }
+    }
+
+    /* Toast */
+    .admin-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .85rem;
+      font-weight: 500;
+      box-shadow: var(--shadow);
+      z-index: 300;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all .3s ease;
+    }
+
+    .admin-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .admin-toast.success {
+      border-color: var(--green);
+    }
+
+    .admin-toast.error {
+      border-color: var(--red);
+    }
+
+    /* Modal wide para detalhes */
+    .modal--wide {
+      width: 600px;
+    }
+
+    /* Detalhe do pedido */
+    .ped-detalhe {
+      font-size: .875rem;
+    }
+
+    .ped-detalhe__section {
+      margin-bottom: 18px;
+    }
+
+    .ped-detalhe__section-title {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ped-detalhe__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+    }
+
+    .ped-detalhe__field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .ped-detalhe__field-label {
+      font-size: .7rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .ped-detalhe__field-value {
+      font-weight: 500;
+    }
+
+    .ped-detalhe__item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ped-detalhe__item:last-child {
+      border-bottom: none;
+    }
+
+    .ped-detalhe__item-qty {
+      background: rgba(46, 204, 113, .15);
+      color: var(--green);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: .75rem;
+      font-weight: 700;
+      margin-right: 8px;
+    }
+
+    .ped-detalhe__totais {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .ped-detalhe__total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: .85rem;
+      padding: 3px 0;
+    }
+
+    .ped-detalhe__total-row--final {
+      border-top: 1px solid var(--border);
+      margin-top: 6px;
+      padding-top: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .btn--view {
+      background: rgba(46, 204, 113, .1);
+      color: var(--green);
+      border: 1px solid rgba(46, 204, 113, .25);
+      padding: 4px 10px;
+      font-size: .75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .btn--view:hover {
+      background: rgba(46, 204, 113, .2);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 60px;
+      }
+
+      .sidebar__logo,
+      .sidebar__sub,
+      .sidebar__link span,
+      .sidebar__footer {
+        display: none;
+      }
+
+      .sidebar__link {
+        justify-content: center;
+        padding: 14px;
+      }
+
+      .main-content {
+        margin-left: 60px;
+        padding: 20px 16px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .modal--wide {
+        width: 95vw;
+      }
+
+      .ped-detalhe__grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- display:none — admin-auth.js exibe após verificar a sessão do Supabase -->
+  <div class="admin-layout" style="display:none;">
+
+    <!-- ═══ Sidebar ══════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🧉 Tereré Mix</div>
+        <div class="sidebar__sub">Painel Administrativo</div>
+      </div>
+      <nav class="sidebar__nav">
+        <button class="sidebar__link active" data-tab="pedidos" id="nav-pedidos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          <span>Pedidos</span>
+        </button>
+        <button class="sidebar__link" data-tab="produtos" id="nav-produtos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+          <span>Produtos</span>
+        </button>
+        <button class="sidebar__link" data-tab="estoque" id="nav-estoque">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" />
+            <line x1="3" y1="12" x2="3.01" y2="12" />
+            <line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+          <span>Estoque</span>
+        </button>
+        <button class="sidebar__link" data-tab="cupons" id="nav-cupons">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+            <line x1="7" y1="7" x2="7.01" y2="7" />
+          </svg>
+          <span>Cupons / Descontos</span>
+        </button>
+      </nav>
+      <div class="sidebar__footer">
+        <a href="index.html">← Ver loja</a>
+        <button id="btn-logout" style="display:block;margin-top:10px;background:none;border:none;color:var(--muted);font-size:.75rem;font-family:inherit;cursor:pointer;padding:0;text-align:left;transition:color .2s;"
+          onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">
+          🚪 Sair da conta
+        </button>
+      </div>
+    </aside>
+
+    <!-- ═══ Main ═════════════════════════════════════ -->
+    <main class="main-content">
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <div>
+          <h1 class="topbar__title" id="page-title">Pedidos</h1>
+          <p style="font-size:.8rem;color:var(--muted);margin-top:2px;" id="page-sub">Gerencie todos os pedidos em tempo
+            real</p>
+        </div>
+        <div class="topbar__actions">
+          <button class="btn btn--ghost btn--sm" id="btn-refresh" title="Atualizar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 .49-4.56" />
+            </svg>
+            Atualizar
+          </button>
+          <button class="btn btn--primary btn--sm" id="btn-novo-produto" style="display:none;">
+            + Novo Produto
+          </button>
+          <button class="btn btn--primary btn--sm" id="btn-novo-cupom-topbar" style="display:none;">
+            + Novo Cupom
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card stat-card--yellow">
+          <div class="stat-card__label">Pendentes</div>
+          <div class="stat-card__value" id="stat-pendentes">—</div>
+          <div class="stat-card__sub">Aguardando preparo</div>
+        </div>
+        <div class="stat-card stat-card--primary">
+          <div class="stat-card__label">Preparando</div>
+          <div class="stat-card__value" id="stat-preparando">—</div>
+          <div class="stat-card__sub">Em produção</div>
+        </div>
+        <div class="stat-card stat-card--green">
+          <div class="stat-card__label">Prontos</div>
+          <div class="stat-card__value" id="stat-prontos">—</div>
+          <div class="stat-card__sub">Aguardando entrega</div>
+        </div>
+        <div class="stat-card stat-card--green">
+          <div class="stat-card__label">Hoje — Receita</div>
+          <div class="stat-card__value" id="stat-receita">R$ —</div>
+          <div class="stat-card__sub">Total entregues hoje</div>
+        </div>
+      </div>
+
+      <!-- Tab Pedidos -->
+      <div class="tab-panel active" id="panel-pedidos">
+        <div class="card">
+          <div class="card__header">
+            <span class="card__title">Todos os Pedidos</span>
+            <div style="display:flex;gap:8px;">
+              <select class="form-select" id="filtro-status" style="padding:5px 10px;font-size:.8rem;">
+                <option value="">Todos os status</option>
+                <option value="pendente">Pendente</option>
+                <option value="preparando">Preparando</option>
+                <option value="pronto">Pronto</option>
+                <option value="entregue">Entregue</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+              <select class="form-select" id="filtro-tipo" style="padding:5px 10px;font-size:.8rem;">
+                <option value="">Todos os tipos</option>
+                <option value="online">🛵 Delivery</option>
+                <option value="balcao">🏪 Retirada / Local</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="table-pedidos">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Cliente</th>
+                  <th>Tipo</th>
+                  <th>Data</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Detalhes</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-pedidos">
+                <tr>
+                  <td colspan="7">
+                    <div class="skeleton" style="margin:8px 0;"></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Produtos -->
+      <div class="tab-panel" id="panel-produtos">
+        <div class="card">
+          <div class="card__header">
+            <span class="card__title">Catálogo de Produtos</span>
+          </div>
+          <div class="table-wrap">
+            <table id="table-produtos">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nome</th>
+                  <th>Categoria</th>
+                  <th>Preço</th>
+                  <th>Estoque</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-produtos">
+                <tr>
+                  <td colspan="7">
+                    <div class="skeleton" style="margin:8px 0;"></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Estoque -->
+      <div class="tab-panel" id="panel-estoque">
+        <div class="card">
+          <div class="card__header">
+            <span class="card__title">Controle de Estoque</span>
+            <button class="btn btn--primary btn--sm" id="btn-entrada-estoque">+ Registrar Entrada</button>
+          </div>
+          <div class="table-wrap">
+            <table id="table-estoque">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Categoria</th>
+                  <th>Preço</th>
+                  <th>Estoque Atual</th>
+                  <th>Situação</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-estoque">
+                <tr>
+                  <td colspan="6">
+                    <div class="skeleton" style="margin:8px 0;"></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Cupons -->
+      <div class="tab-panel" id="panel-cupons">
+        <div class="card">
+          <div class="card__header">
+            <span class="card__title">Cupons de Desconto</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="text" class="form-select" id="busca-cupom" placeholder="Buscar código ou nome..."
+                style="width:200px;padding:5px 10px;font-size:.8rem;">
+              <select class="form-select" id="filtro-cupom-status" style="padding:5px 10px;font-size:.8rem;">
+                <option value="">Todos os status</option>
+                <option value="1">Ativos</option>
+                <option value="0">Inativos</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="table-cupons">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Nome</th>
+                  <th>Tipo</th>
+                  <th>Desconto</th>
+                  <th>Validade</th>
+                  <th>Status</th>
+                  <th>Usos</th>
+                  <th>Pedido Mín.</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-cupons">
+                <tr>
+                  <td colspan="9">
+                    <div class="skeleton" style="margin:8px 0;"></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal Editar Produto -->
+  <div class="modal-overlay" id="modal-produto">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modal-produto-title">Editar Produto</h2>
+        <button class="modal__close" id="btn-fechar-modal-produto">✕</button>
+      </div>
+      <form id="form-produto">
+        <input type="hidden" id="produto-id">
+        <div class="form-row">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Nome *</label>
+            <input type="text" id="produto-nome" class="form-input" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Preço (R$) *</label>
+            <input type="number" id="produto-preco" class="form-input" step="0.01" min="0" required>
+          </div>
+          <div class="form-group">
+            <label>Categoria</label>
+            <input type="text" id="produto-categoria" class="form-input">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Descrição</label>
+            <textarea id="produto-descricao" class="form-textarea" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn--ghost" id="btn-cancelar-produto">Cancelar</button>
+          <button type="submit" class="btn btn--primary" id="btn-salvar-produto">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Entrada de Estoque -->
+  <div class="modal-overlay" id="modal-estoque">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title">Registrar Entrada de Estoque</h2>
+        <button class="modal__close" id="btn-fechar-modal-estoque">✕</button>
+      </div>
+      <form id="form-estoque">
+        <div class="form-row">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Produto *</label>
+            <select id="entrada-produto-id" class="form-select" required>
+              <option value="">Selecione o produto...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantidade *</label>
+            <input type="number" id="entrada-quantidade" class="form-input" min="1" required>
+          </div>
+          <div class="form-group">
+            <label>Motivo</label>
+            <input type="text" id="entrada-motivo" class="form-input" placeholder="Ex: Compra fornecedor">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn--ghost" id="btn-cancelar-estoque">Cancelar</button>
+          <button type="submit" class="btn btn--success">Confirmar Entrada</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Cupom -->
+  <div class="modal-overlay" id="modal-cupom">
+    <div class="modal modal--wide">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modal-cupom-title">Novo Cupom</h2>
+        <button class="modal__close" id="btn-fechar-modal-cupom">✕</button>
+      </div>
+      <form id="form-cupom">
+        <input type="hidden" id="cupom-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome do Cupom *</label>
+            <input type="text" id="cupom-name" class="form-input" required placeholder="Ex: 10% para novos clientes">
+          </div>
+          <div class="form-group">
+            <label>Código do Cupom *</label>
+            <input type="text" id="cupom-code" class="form-input" required placeholder="Ex: TERERE10"
+              style="text-transform:uppercase;letter-spacing:.05em;">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Desconto *</label>
+            <select id="cupom-type" class="form-select" required>
+              <option value="percent">Percentual (%)</option>
+              <option value="fixed">Valor Fixo (R$)</option>
+            </select>
+          </div>
+          <div class="form-group" id="group-percentage">
+            <label>Percentual (%) *</label>
+            <input type="number" id="cupom-percentage" class="form-input" min="1" max="100" step="1"
+              placeholder="Ex: 10">
+          </div>
+          <div class="form-group" id="group-fixed" style="display:none;">
+            <label>Valor Fixo (R$) *</label>
+            <input type="number" id="cupom-fixed" class="form-input" min="0.01" step="0.01" placeholder="Ex: 5.00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Validade (data limite)</label>
+            <input type="date" id="cupom-expires" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Limite de Usos</label>
+            <input type="number" id="cupom-limit" class="form-input" min="1" placeholder="Ilimitado se vazio">
+          </div>
+          <div class="form-group">
+            <label>Pedido Mínimo (R$)</label>
+            <input type="number" id="cupom-minorder" class="form-input" min="0" step="0.01" placeholder="Sem mínimo">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Descrição (opcional)</label>
+            <textarea id="cupom-description" class="form-textarea" rows="2"
+              placeholder="Descrição interna do cupom"></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:normal;">
+              <input type="checkbox" id="cupom-active" checked
+                style="width:16px;height:16px;accent-color:var(--primary);">
+              <span>Cupom ativo (disponível para uso no checkout)</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn--ghost" id="btn-cancelar-cupom">Cancelar</button>
+          <button type="submit" class="btn btn--primary">Salvar Cupom</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Detalhes do Pedido -->
+  <div class="modal-overlay" id="modal-detalhe-pedido">
+    <div class="modal modal--wide">
+      <div class="modal__header">
+        <h2 class="modal__title" id="detalhe-titulo">Detalhes do Pedido</h2>
+        <button class="modal__close" id="btn-fechar-detalhe">✕</button>
+      </div>
+      <div id="detalhe-content">Carregando...</div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="admin-toast" id="admin-toast"></div>
+
+  <script src="js/api.js"></script>
+  <!-- admin-auth.js verifica a sessão e configura o token antes do painel carregar -->
+  <script src="js/admin-auth.js"></script>
+  <script>
+    /* ═══════════════════════════════════════════════
+       TERERÉ MIX — Admin Panel Script
+       ═══════════════════════════════════════════════ */
+
+    /* ── Estado ────────────────────────────────── */
+    let currentTab = 'pedidos';
+    let allPedidos = [];
+    let allProdutos = [];
+    let allEstoque = [];
+
+    /* ── Utilitários ───────────────────────────── */
+    function fmtBRL(v) {
+      return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    function fmtData(str) {
+      if (!str) return '—';
+      const d = new Date(str.replace(' ', 'T'));
+      return isNaN(d) ? str
+        : `${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    function toast(msg, type = 'success') {
+      const el = document.getElementById('admin-toast');
+      el.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+      el.className = `admin-toast show ${type}`;
+      setTimeout(() => el.classList.remove('show'), 3500);
+    }
+
+    /* ── Badge de status ───────────────────────── */
+    const STATUS_LABEL = { pendente: 'Pendente', preparando: 'Preparando', pronto: 'Pronto', entregue: 'Entregue', cancelado: 'Cancelado' };
+    function statusBadge(s) {
+      return `<span class="badge badge--${s}">${STATUS_LABEL[s] || s}</span>`;
+    }
+
+    /* ═══ Tabs ══════════════════════════════════ */
+    document.querySelectorAll('.sidebar__link[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.sidebar__link').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`panel-${tab}`).classList.add('active');
+        currentTab = tab;
+
+        // Atualiza topbar
+        const titles = {
+          pedidos: ['Pedidos', 'Gerencie todos os pedidos em tempo real'],
+          produtos: ['Produtos', 'Gerencie o catálogo completo'],
+          estoque: ['Estoque', 'Controle a entrada e saída de produtos'],
+          cupons: ['Cupons / Descontos', 'Crie e gerencie cupons de desconto'],
+        };
+        document.getElementById('page-title').textContent = titles[tab][0];
+        document.getElementById('page-sub').textContent = titles[tab][1];
+        document.getElementById('btn-novo-produto').style.display = tab === 'produtos' ? 'flex' : 'none';
+        document.getElementById('btn-novo-cupom-topbar').style.display = tab === 'cupons' ? 'flex' : 'none';
+
+        loadTab(tab);
+      });
+    });
+
+    /* ═══ Carregamento das abas ═════════════════ */
+    async function loadTab(tab) {
+      if (tab === 'pedidos') await loadPedidos();
+      if (tab === 'produtos') await loadProdutos();
+      if (tab === 'estoque') await loadEstoque();
+      if (tab === 'cupons') await loadCupons();
+    }
+
+    /* ── Refresh ───────────────────────────────── */
+    document.getElementById('btn-refresh').addEventListener('click', () => {
+      loadTab(currentTab);
+      loadStats();
+    });
+
+    /* ═══ STATS ══════════════════════════════════ */
+    async function loadStats() {
+      try {
+        const pedidos = await API.getPedidos({ limit: 200 });
+        document.getElementById('stat-pendentes').textContent = pedidos.filter(p => p.status === 'pendente').length;
+        document.getElementById('stat-preparando').textContent = pedidos.filter(p => p.status === 'preparando').length;
+        document.getElementById('stat-prontos').textContent = pedidos.filter(p => p.status === 'pronto').length;
+        const hoje = new Date().toLocaleDateString('pt-BR');
+        const receitaHoje = pedidos
+          .filter(p => p.status === 'entregue' && fmtData(p.criado_em).startsWith(hoje))
+          .reduce((s, p) => s + p.total, 0);
+        document.getElementById('stat-receita').textContent = fmtBRL(receitaHoje);
+      } catch { /* silencia */ }
+    }
+
+    /* ═══ PEDIDOS ════════════════════════════════ */
+    async function loadPedidos() {
+      const tbody = document.getElementById('tbody-pedidos');
+      tbody.innerHTML = `<tr><td colspan="7"><div class="skeleton" style="margin:8px 0;"></div></td></tr>`;
+
+      try {
+        const filtroStatus = document.getElementById('filtro-status').value;
+        const filtroTipo = document.getElementById('filtro-tipo').value;
+        const params = {};
+        if (filtroStatus) params.status = filtroStatus;
+        if (filtroTipo) params.tipo = filtroTipo;
+        allPedidos = await API.getPedidos(params);
+
+        if (!allPedidos.length) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">Nenhum pedido encontrado</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = allPedidos.map(p => {
+          const tipoLabel = p.tipo === 'online' ? '🛵 Delivery' : '🏪 Balcão/Local';
+          return `
+          <tr id="row-pedido-${p.id}" style="cursor:default;">
+            <td><strong>#${p.id}</strong></td>
+            <td>${p.nome_cliente || '<em style="color:var(--muted)">Anônimo</em>'}</td>
+            <td><span style="font-size:.75rem;background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px;">${tipoLabel}</span></td>
+            <td style="white-space:nowrap;font-size:.8rem;">${fmtData(p.criado_em)}</td>
+            <td><strong>${fmtBRL(p.total)}</strong></td>
+            <td>${statusBadge(p.status)}</td>
+            <td>
+              <button class="btn--view" onclick="abrirDetalhePedido(${p.id})" title="Ver detalhes completos">
+                👁 Ver
+              </button>
+            </td>
+            <td>
+              <select class="status-select" data-pedido-id="${p.id}" onchange="mudarStatus(${p.id}, this.value)">
+                <option value="pendente"   ${p.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                <option value="preparando" ${p.status === 'preparando' ? 'selected' : ''}>Preparando</option>
+                <option value="pronto"     ${p.status === 'pronto' ? 'selected' : ''}>Pronto</option>
+                <option value="entregue"   ${p.status === 'entregue' ? 'selected' : ''}>Entregue</option>
+                <option value="cancelado"  ${p.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+              </select>
+            </td>
+          </tr>
+        `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:1rem;">Erro: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function mudarStatus(id, status) {
+      try {
+        await API.atualizarStatus(id, status);
+        toast(`Pedido #${id} → ${STATUS_LABEL[status]}`);
+        await loadPedidos();
+        await loadStats();
+      } catch (err) {
+        toast(err.message, 'error');
+        await loadPedidos(); // reverter visual
+      }
+    }
+
+    // Filtros
+    document.getElementById('filtro-status').addEventListener('change', loadPedidos);
+    document.getElementById('filtro-tipo').addEventListener('change', loadPedidos);
+
+    /* ═══ PRODUTOS ═══════════════════════════════ */
+    async function loadProdutos() {
+      const tbody = document.getElementById('tbody-produtos');
+      tbody.innerHTML = `<tr><td colspan="7"><div class="skeleton" style="margin:8px 0;"></div></td></tr>`;
+
+      try {
+        // incluirInativos=true exibe ativos E inativos no painel admin
+        allProdutos = await API.getProdutos(null, true);
+
+        tbody.innerHTML = allProdutos.map(p => `
+          <tr>
+            <td style="color:var(--muted);">${p.id}</td>
+            <td><strong>${p.nome}</strong></td>
+            <td><span style="font-size:.75rem;color:var(--muted);">${p.categoria}</span></td>
+            <td>
+              <span class="preco-display" data-pid="${p.id}">${fmtBRL(p.preco)}</span>
+            </td>
+            <td class="${p.estoque <= 5 ? 'estoque-low' : 'estoque-ok'}">${p.estoque}</td>
+            <td>${p.ativo ? '<span class="badge badge--pronto">Ativo</span>' : '<span class="badge badge--cancelado">Inativo</span>'}</td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn--ghost btn--sm" onclick="abrirEditarProduto(${p.id})">✏️ Editar</button>
+              <button class="btn btn--${p.ativo ? 'danger' : 'success'} btn--sm"
+                      onclick="toggleProduto(${p.id}, ${p.ativo})">
+                ${p.ativo ? '🚫 Desativar' : '✅ Ativar'}
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:1rem;">Erro: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function toggleProduto(id, atualAtivo) {
+      try {
+        await API.atualizarProduto(id, { ativo: atualAtivo ? 0 : 1 });
+        toast(atualAtivo ? 'Produto desativado' : 'Produto ativado');
+        await loadProdutos();
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    /* Modal Produto */
+    function abrirEditarProduto(id) {
+      const p = allProdutos.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('produto-id').value = p.id;
+      document.getElementById('produto-nome').value = p.nome;
+      document.getElementById('produto-preco').value = p.preco;
+      document.getElementById('produto-categoria').value = p.categoria;
+      document.getElementById('produto-descricao').value = p.descricao || '';
+      document.getElementById('modal-produto-title').textContent = `Editar: ${p.nome}`;
+      document.getElementById('modal-produto').classList.add('open');
+    }
+
+    function abrirNovoProduto() {
+      document.getElementById('produto-id').value = '';
+      document.getElementById('produto-nome').value = '';
+      document.getElementById('produto-preco').value = '';
+      document.getElementById('produto-categoria').value = '';
+      document.getElementById('produto-descricao').value = '';
+      document.getElementById('modal-produto-title').textContent = 'Novo Produto';
+      document.getElementById('modal-produto').classList.add('open');
+    }
+
+    document.getElementById('btn-novo-produto').addEventListener('click', abrirNovoProduto);
+
+    ['btn-fechar-modal-produto', 'btn-cancelar-produto'].forEach(id => {
+      document.getElementById(id).addEventListener('click', () =>
+        document.getElementById('modal-produto').classList.remove('open'));
+    });
+
+    document.getElementById('form-produto').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = document.getElementById('produto-id').value;
+      const payload = {
+        nome: document.getElementById('produto-nome').value,
+        preco: parseFloat(document.getElementById('produto-preco').value),
+        categoria: document.getElementById('produto-categoria').value,
+        descricao: document.getElementById('produto-descricao').value,
+      };
+      try {
+        if (id) { await API.atualizarProduto(id, payload); toast('Produto atualizado!'); }
+        else { await API.criarProduto(payload); toast('Produto criado!'); }
+        document.getElementById('modal-produto').classList.remove('open');
+        await loadProdutos();
+      } catch (err) { toast(err.message, 'error'); }
+    });
+
+    /* ═══ ESTOQUE ════════════════════════════════ */
+    async function loadEstoque() {
+      const tbody = document.getElementById('tbody-estoque');
+      tbody.innerHTML = `<tr><td colspan="6"><div class="skeleton" style="margin:8px 0;"></div></td></tr>`;
+
+      try {
+        allEstoque = await API.getEstoque();
+
+        tbody.innerHTML = allEstoque.map(p => {
+          const situacao = p.estoque === 0
+            ? '<span class="badge badge--cancelado">Esgotado</span>'
+            : p.estoque <= 5
+              ? '<span class="badge badge--pendente">Estoque baixo</span>'
+              : '<span class="badge badge--pronto">OK</span>';
+
+          return `
+            <tr>
+              <td><strong>${p.nome}</strong></td>
+              <td style="font-size:.8rem;color:var(--muted);">${p.categoria}</td>
+              <td>${fmtBRL(p.preco)}</td>
+              <td class="${p.estoque <= 5 ? 'estoque-low' : 'estoque-ok'}">${p.estoque} un.</td>
+              <td>${situacao}</td>
+              <td>
+                <button class="btn btn--success btn--sm"
+                        onclick="abrirEntradaRapida(${p.id}, '${p.nome.replace(/'/g, "\\'")}')">
+                  + Entrada
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--red);padding:1rem;">Erro: ${err.message}</td></tr>`;
+      }
+    }
+
+    /* Modal Entrada Estoque */
+    document.getElementById('btn-entrada-estoque').addEventListener('click', () => {
+      popularSelectProdutos();
+      document.getElementById('modal-estoque').classList.add('open');
+    });
+
+    function abrirEntradaRapida(id, nome) {
+      popularSelectProdutos(id);
+      document.getElementById('modal-estoque').classList.add('open');
+    }
+
+    function popularSelectProdutos(selecionado) {
+      const sel = document.getElementById('entrada-produto-id');
+      sel.innerHTML = '<option value="">Selecione o produto...</option>'
+        + allEstoque.map(p => `<option value="${p.id}" ${p.id === selecionado ? 'selected' : ''}>${p.nome}</option>`).join('');
+    }
+
+    ['btn-fechar-modal-estoque', 'btn-cancelar-estoque'].forEach(id => {
+      document.getElementById(id).addEventListener('click', () =>
+        document.getElementById('modal-estoque').classList.remove('open'));
+    });
+
+    document.getElementById('form-estoque').addEventListener('submit', async e => {
+      e.preventDefault();
+      const pid = parseInt(document.getElementById('entrada-produto-id').value);
+      const qty = parseInt(document.getElementById('entrada-quantidade').value);
+      const mot = document.getElementById('entrada-motivo').value;
+      if (!pid || !qty) { toast('Preencha produto e quantidade', 'error'); return; }
+      try {
+        await API.registrarEntrada(pid, qty, mot);
+        toast(`+${qty} unidades registradas!`);
+        document.getElementById('modal-estoque').classList.remove('open');
+        document.getElementById('entrada-quantidade').value = '';
+        document.getElementById('entrada-motivo').value = '';
+        await loadEstoque();
+        await loadStats();
+      } catch (err) { toast(err.message, 'error'); }
+    });
+
+    /* ═══ CUPONS ════════════════════════════════ */
+    let allCupons = [];
+
+    async function loadCupons() {
+      const tbody = document.getElementById('tbody-cupons');
+      tbody.innerHTML = `<tr><td colspan="9"><div class="skeleton" style="margin:8px 0;"></div></td></tr>`;
+      try {
+        const search = document.getElementById('busca-cupom').value.trim();
+        const active = document.getElementById('filtro-cupom-status').value;
+        const filtros = {};
+        if (search) filtros.search = search;
+        if (active !== '') filtros.active = active;
+        allCupons = await API.getCupons(filtros);
+
+        if (!allCupons.length) {
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem;">Nenhum cupom encontrado. Clique em "+ Novo Cupom" para criar.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = allCupons.map(c => {
+          const desconto = c.type === 'percent'
+            ? `<strong>${c.percentage}%</strong>`
+            : `<strong>${fmtBRL(c.fixed_amount)}</strong>`;
+          const validade = c.expires_at
+            ? new Date(c.expires_at + 'T00:00:00').toLocaleDateString('pt-BR')
+            : '<span style="color:var(--muted)">—</span>';
+          const usos = c.usage_limit
+            ? `${c.usage_count} / ${c.usage_limit}`
+            : `${c.usage_count}`;
+          const minOrder = c.minimum_order_value
+            ? fmtBRL(c.minimum_order_value)
+            : '<span style="color:var(--muted)">—</span>';
+
+          return `
+            <tr>
+              <td><strong style="letter-spacing:.06em;font-family:monospace;">${c.code}</strong></td>
+              <td>${c.name}</td>
+              <td style="font-size:.8rem;color:var(--muted);">${c.type === 'percent' ? 'Percentual' : 'Valor Fixo'}</td>
+              <td>${desconto}</td>
+              <td style="font-size:.8rem;">${validade}</td>
+              <td>${c.active ? '<span class="badge badge--pronto">Ativo</span>' : '<span class="badge badge--cancelado">Inativo</span>'}</td>
+              <td style="font-size:.8rem;color:var(--muted);">${usos}</td>
+              <td style="font-size:.8rem;">${minOrder}</td>
+              <td style="display:flex;gap:5px;flex-wrap:wrap;">
+                <button class="btn btn--ghost btn--sm" onclick="abrirEditarCupom(${c.id})">✏️ Editar</button>
+                <button class="btn btn--${c.active ? 'danger' : 'success'} btn--sm" onclick="toggleCupom(${c.id}, ${c.active})">
+                  ${c.active ? '🚫 Desativar' : '✅ Ativar'}
+                </button>
+                <button class="btn btn--danger btn--sm" onclick="confirmarExcluirCupom(${c.id}, '${c.code.replace(/'/g, "\\'")}')">🗑</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="9" style="color:var(--red);padding:1rem;">Erro: ${err.message}</td></tr>`;
+      }
+    }
+
+    /* Filtros cupons */
+    document.getElementById('busca-cupom').addEventListener('input', () => loadCupons());
+    document.getElementById('filtro-cupom-status').addEventListener('change', () => loadCupons());
+
+    /* Botão topbar */
+    document.getElementById('btn-novo-cupom-topbar').addEventListener('click', abrirNovoCupom);
+
+    function toggleCupomTypeFields(type) {
+      document.getElementById('group-percentage').style.display = type === 'percent' ? '' : 'none';
+      document.getElementById('group-fixed').style.display = type === 'fixed' ? '' : 'none';
+    }
+
+    document.getElementById('cupom-type').addEventListener('change', e => toggleCupomTypeFields(e.target.value));
+
+    function abrirNovoCupom() {
+      document.getElementById('cupom-id').value = '';
+      document.getElementById('cupom-name').value = '';
+      document.getElementById('cupom-code').value = '';
+      document.getElementById('cupom-type').value = 'percent';
+      document.getElementById('cupom-percentage').value = '';
+      document.getElementById('cupom-fixed').value = '';
+      document.getElementById('cupom-expires').value = '';
+      document.getElementById('cupom-limit').value = '';
+      document.getElementById('cupom-minorder').value = '';
+      document.getElementById('cupom-description').value = '';
+      document.getElementById('cupom-active').checked = true;
+      document.getElementById('modal-cupom-title').textContent = 'Novo Cupom';
+      toggleCupomTypeFields('percent');
+      document.getElementById('modal-cupom').classList.add('open');
+    }
+
+    function abrirEditarCupom(id) {
+      const c = allCupons.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('cupom-id').value = c.id;
+      document.getElementById('cupom-name').value = c.name;
+      document.getElementById('cupom-code').value = c.code;
+      document.getElementById('cupom-type').value = c.type;
+      document.getElementById('cupom-percentage').value = c.percentage != null ? c.percentage : '';
+      document.getElementById('cupom-fixed').value = c.fixed_amount != null ? c.fixed_amount : '';
+      document.getElementById('cupom-expires').value = c.expires_at ? c.expires_at.split('T')[0].split(' ')[0] : '';
+      document.getElementById('cupom-limit').value = c.usage_limit != null ? c.usage_limit : '';
+      document.getElementById('cupom-minorder').value = c.minimum_order_value != null ? c.minimum_order_value : '';
+      document.getElementById('cupom-description').value = c.description || '';
+      document.getElementById('cupom-active').checked = !!c.active;
+      document.getElementById('modal-cupom-title').textContent = `Editar: ${c.code}`;
+      toggleCupomTypeFields(c.type);
+      document.getElementById('modal-cupom').classList.add('open');
+    }
+
+    ['btn-fechar-modal-cupom', 'btn-cancelar-cupom'].forEach(id => {
+      document.getElementById(id).addEventListener('click', () =>
+        document.getElementById('modal-cupom').classList.remove('open'));
+    });
+
+    document.getElementById('form-cupom').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = document.getElementById('cupom-id').value;
+      const type = document.getElementById('cupom-type').value;
+      const payload = {
+        name: document.getElementById('cupom-name').value.trim(),
+        code: document.getElementById('cupom-code').value.trim().toUpperCase(),
+        type,
+        percentage: type === 'percent' ? parseFloat(document.getElementById('cupom-percentage').value) : null,
+        fixed_amount: type === 'fixed' ? parseFloat(document.getElementById('cupom-fixed').value) : null,
+        active: document.getElementById('cupom-active').checked ? 1 : 0,
+        expires_at: document.getElementById('cupom-expires').value || null,
+        usage_limit: document.getElementById('cupom-limit').value ? parseInt(document.getElementById('cupom-limit').value) : null,
+        minimum_order_value: document.getElementById('cupom-minorder').value ? parseFloat(document.getElementById('cupom-minorder').value) : null,
+        description: document.getElementById('cupom-description').value.trim() || null,
+      };
+      try {
+        if (id) { await API.atualizarCupom(id, payload); toast('Cupom atualizado!'); }
+        else { await API.criarCupom(payload); toast('Cupom criado com sucesso!'); }
+        document.getElementById('modal-cupom').classList.remove('open');
+        await loadCupons();
+      } catch (err) { toast(err.message, 'error'); }
+    });
+
+    async function toggleCupom(id, atualAtivo) {
+      try {
+        await API.atualizarCupom(id, { active: atualAtivo ? 0 : 1 });
+        toast(atualAtivo ? 'Cupom desativado.' : 'Cupom ativado.');
+        await loadCupons();
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    async function confirmarExcluirCupom(id, code) {
+      if (!confirm(`Excluir o cupom "${code}"?\n\nEsta ação não pode ser desfeita.\nOs pedidos já realizados com esse cupom mantêm o desconto registrado.`)) return;
+      try {
+        await API.excluirCupom(id);
+        toast(`Cupom "${code}" excluído.`);
+        await loadCupons();
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    /* ═══ DETALHES DO PEDIDO ════════════════════ */
+    async function abrirDetalhePedido(id) {
+      const overlay = document.getElementById('modal-detalhe-pedido');
+      const content = document.getElementById('detalhe-content');
+      const titulo = document.getElementById('detalhe-titulo');
+      titulo.textContent = `Pedido #${id}`;
+      content.innerHTML = '<div class="skeleton" style="height:120px;margin:8px 0;"></div>';
+      overlay.classList.add('open');
+
+      try {
+        const pedido = await API.getPedido(id);
+        const itens = pedido.itens || [];
+
+        // Extrai info de observação — fallback para pedidos antigos sem campos estruturados
+        const obs = pedido.observacao || '';
+        const matchPag = obs.match(/\[PAGAMENTO:\s*([^\]]+)\]/);
+        const matchCup = obs.match(/\[CUPOM:\s*([^\]]+)\]/);
+        const matchEntr = obs.match(/\[ENTREGA:\s*R\$\s*([\d.]+)\]/);
+        const matchAcr = obs.match(/\[ACRÉSCIMO CRÉDITO:\s*R\$\s*([\d.]+)\]/);
+        const obsLimpa = obs.replace(/\[[^\]]+\]/g, '').trim();
+
+        // Usa campos estruturados do banco (preferência) com fallback para observação legada
+        const taxaEntrega = pedido.delivery_fee != null ? parseFloat(pedido.delivery_fee) : (matchEntr ? parseFloat(matchEntr[1]) : 0);
+        const acrescimo = pedido.credit_surcharge != null ? parseFloat(pedido.credit_surcharge) : (matchAcr ? parseFloat(matchAcr[1]) : 0);
+        const pagamento = pedido.payment_method || (matchPag ? matchPag[1] : '—');
+        const cupomCodigo = pedido.coupon_code || (matchCup ? matchCup[1] : null);
+        const desconto = pedido.discount_amount != null ? parseFloat(pedido.discount_amount) : 0;
+        const subtotalSalvo = pedido.subtotal_amount != null ? parseFloat(pedido.subtotal_amount) : null;
+
+        const subtotalItens = itens.reduce((s, i) => s + (i.preco_unit * i.quantidade), 0);
+        const totalFinal = pedido.total;
+
+        // Tipo label
+        const tipoLabel = pedido.tipo === 'online' ? '🛵 Delivery'
+          : obs.includes('[COMER NO LOCAL]') ? '🪑 Comer no Local'
+            : '🏪 Retirada';
+
+        content.innerHTML = `
+          <div class="ped-detalhe">
+
+            <div class="ped-detalhe__section">
+              <div class="ped-detalhe__section-title">Informações Gerais</div>
+              <div class="ped-detalhe__grid">
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">ID do Pedido</span>
+                  <span class="ped-detalhe__field-value">#${pedido.id}</span>
+                </div>
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">Status</span>
+                  <span class="ped-detalhe__field-value">${statusBadge(pedido.status)}</span>
+                </div>
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">Cliente</span>
+                  <span class="ped-detalhe__field-value">${pedido.nome_cliente || '<em>Anônimo</em>'}</span>
+                </div>
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">WhatsApp</span>
+                  <span class="ped-detalhe__field-value">${pedido.telefone || '—'}</span>
+                </div>
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">Tipo</span>
+                  <span class="ped-detalhe__field-value">${tipoLabel}</span>
+                </div>
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">Data/Hora</span>
+                  <span class="ped-detalhe__field-value">${fmtData(pedido.criado_em)}</span>
+                </div>
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">Pagamento</span>
+                  <span class="ped-detalhe__field-value">${pagamento}</span>
+                </div>
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">Cupom</span>
+                  <span class="ped-detalhe__field-value">${cupomCodigo
+            ? `<span style="background:rgba(46,204,113,.15);color:#1a7a4a;padding:2px 8px;border-radius:4px;font-weight:700;letter-spacing:.05em;">${cupomCodigo}</span>`
+            : '—'
+          }</span>
+                </div>
+              </div>
+            </div>
+
+            ${pedido.endereco ? `
+            <div class="ped-detalhe__section">
+              <div class="ped-detalhe__section-title">📍 Endereço de Entrega</div>
+              <div class="ped-detalhe__field">
+                <span class="ped-detalhe__field-label">Endereço completo</span>
+                <span class="ped-detalhe__field-value">${pedido.endereco}</span>
+              </div>
+            </div>` : ''}
+
+            <div class="ped-detalhe__section">
+              <div class="ped-detalhe__section-title">🛒 Itens do Pedido (${itens.length})</div>
+              ${itens.map(i => `
+                <div class="ped-detalhe__item">
+                  <div>
+                    <span class="ped-detalhe__item-qty">${i.quantidade}×</span>
+                    <span>${i.nome_produto}</span>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:.75rem;color:var(--muted);">${fmtBRL(i.preco_unit)} cada</div>
+                    <div style="font-weight:700;">${fmtBRL(i.preco_unit * i.quantidade)}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="ped-detalhe__section">
+              <div class="ped-detalhe__section-title">💰 Resumo Financeiro</div>
+              <div class="ped-detalhe__totais">
+                <div class="ped-detalhe__total-row">
+                  <span>Subtotal dos Itens</span>
+                  <span>${fmtBRL(subtotalSalvo != null ? subtotalSalvo : subtotalItens)}</span>
+                </div>
+                ${desconto > 0 ? `
+                <div class="ped-detalhe__total-row" style="color:#1a7a4a;">
+                  <span>🏷️ Desconto${cupomCodigo ? ` (${cupomCodigo})` : ''}</span>
+                  <span>− ${fmtBRL(desconto)}</span>
+                </div>` : ''}
+                ${taxaEntrega > 0 ? `<div class="ped-detalhe__total-row"><span>🚗 Taxa de Entrega</span><span>+ ${fmtBRL(taxaEntrega)}</span></div>` : ''}
+                ${acrescimo > 0 ? `<div class="ped-detalhe__total-row" style="color:#c0392b;"><span>💳 Acréscimo Crédito (+3%)</span><span>+ ${fmtBRL(acrescimo)}</span></div>` : ''}
+                <div class="ped-detalhe__total-row--final ped-detalhe__total-row">
+                  <span>Total Final</span>
+                  <span>${fmtBRL(totalFinal)}</span>
+                </div>
+              </div>
+            </div>
+
+            ${obsLimpa ? `
+            <div class="ped-detalhe__section">
+              <div class="ped-detalhe__section-title">📝 Observações</div>
+              <div class="ped-detalhe__field">
+                <span class="ped-detalhe__field-value" style="white-space:pre-wrap;">${obsLimpa}</span>
+              </div>
+            </div>` : ''}
+
+          </div>
+        `;
+      } catch (err) {
+        content.innerHTML = `<p style="color:var(--red);padding:16px;">Erro ao carregar pedido: ${err.message}</p>`;
+      }
+    }
+
+    document.getElementById('btn-fechar-detalhe').addEventListener('click', () =>
+      document.getElementById('modal-detalhe-pedido').classList.remove('open'));
+    document.getElementById('modal-detalhe-pedido').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-detalhe-pedido'))
+        document.getElementById('modal-detalhe-pedido').classList.remove('open');
+    });
+
+    /* ═══ Init ══════════════════════════════════ */
+    (async () => {
+      // Aguarda admin-auth.js terminar a verificação de sessão
+      await AdminAuth.ready();
+
+      await loadStats();
+      await loadPedidos();
+
+      // Auto-refresh pedidos a cada 30s
+      setInterval(() => {
+        if (currentTab === 'pedidos') loadPedidos();
+        loadStats();
+      }, 30000);
+    })();
+
+    // Botão de logout na sidebar
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      if (confirm('Deseja sair do painel admin?')) {
+        await AdminAuth.logout();
+      }
+    });
+  </script>
+</body>
+
+</html>

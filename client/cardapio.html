@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tereré Mix - Cardápio completo. Encontre todos os sabores disponíveis.">
+  <title>Tereré Mix - Cardápio</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* ── Skeleton loader ── */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 8px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── Accordion ── */
+    .category-header { cursor: pointer; user-select: none; }
+    .category-header__icon {
+      transition: transform .25s ease;
+      display: flex; align-items: center;
+    }
+    .category-header--collapsed .category-header__icon { transform: rotate(180deg); }
+    .menu-grid { transition: opacity .2s ease; }
+    .menu-grid--hidden { display: none; }
+
+    /* ── Search highlight ── */
+    .menu-item--hidden { display: none; }
+    .search-empty {
+      padding: 2rem; text-align: center;
+      color: var(--color-gray-500); font-size: .875rem;
+    }
+
+    /* ── Estoque esgotado ── */
+    .menu-item--esgotado { opacity: .5; }
+    .menu-item--esgotado .btn-add-cart { pointer-events: none; opacity: .4; }
+    .badge-esgotado {
+      display: inline-block; margin-left: 6px;
+      font-size: .65rem; font-weight: 700;
+      background: var(--color-danger, #e74c3c);
+      color: #fff; padding: 1px 6px; border-radius: 4px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- ═══ Search Bar ═══ -->
+    <div class="search-bar" id="search-bar">
+      <div class="search-bar__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <input type="text" class="search-bar__input" id="search-input"
+             placeholder="O que você quer comprar hoje?" aria-label="Buscar produtos">
+      <a href="index.html" class="search-bar__close" id="btn-close-search" aria-label="Fechar busca">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </a>
+    </div>
+
+    <!-- ═══ Cardápio (renderizado pela API) ═══ -->
+    <div id="cardapio-wrapper">
+      <!-- Skeleton inicial -->
+      <div id="cardapio-skeleton" style="padding: 1rem;">
+        <div class="skeleton" style="height:40px;margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:80px;margin-bottom:8px;"></div>
+        <div class="skeleton" style="height:80px;margin-bottom:8px;"></div>
+        <div class="skeleton" style="height:80px;margin-bottom:24px;"></div>
+        <div class="skeleton" style="height:40px;margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:80px;margin-bottom:8px;"></div>
+        <div class="skeleton" style="height:80px;"></div>
+      </div>
+    </div>
+
+    <!-- ═══ Bottom Navigation ═══ -->
+    <nav class="bottom-nav" id="bottom-nav" aria-label="Navegação principal">
+      <a href="index.html" class="bottom-nav__item" id="nav-home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Início</span>
+      </a>
+      <a href="pedidos.html" class="bottom-nav__item" id="nav-orders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span>Pedidos</span>
+      </a>
+      <a href="carrinho.html" class="bottom-nav__item" id="nav-cart">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span class="cart-badge" hidden>0</span>
+        <span>Carrinho</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <script src="js/cart.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/checkout.js"></script>
+  <script>
+    /* ============================================================
+       Tereré Mix — cardapio.html
+       Renderiza categorias e produtos dinâmicos via API.
+       Inclui: accordion de categorias, busca em tempo real.
+       ============================================================ */
+
+    /* ── Formatação ── */
+    function fmtBRL(value) {
+      return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    /* ── Ícone de seta (accordion) ── */
+    const CHEVRON_SVG = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>`;
+
+    /* ── HTML de um item do menu ── */
+    function menuItemHTML(p) {
+      const esgotado = p.estoque === 0;
+      const esgotadoBadge = esgotado ? `<span class="badge-esgotado">Esgotado</span>` : '';
+      return `
+        <article class="menu-item ${esgotado ? 'menu-item--esgotado' : ''}"
+                 id="item-${p.id}"
+                 data-product-id="${p.id}"
+                 data-product-name="${p.nome}"
+                 data-product-price="${p.preco}"
+                 data-product-image="${p.imagem || ''}">
+          <div class="menu-item__info">
+            <p class="menu-item__name">${p.nome}${esgotadoBadge}</p>
+            ${p.descricao ? `<p class="menu-item__desc" style="font-size:.75rem;color:var(--color-gray-500);margin:2px 0;">${p.descricao}</p>` : ''}
+            <p class="menu-item__price">${fmtBRL(p.preco)}</p>
+          </div>
+          <img src="${p.imagem || 'assets/images/terere-mix.png'}"
+               alt="${p.nome}" class="menu-item__image" loading="lazy">
+          <button class="btn-add-cart" data-add-to-cart
+                  aria-label="Adicionar ${p.nome}"
+                  ${esgotado ? 'disabled' : ''}>+</button>
+        </article>`;
+    }
+
+    /* ── HTML de uma categoria com accordion ── */
+    function categoriaHTML(nome, produtos, idx) {
+      const slugId = `cat-${idx}`;
+      const gridId = `grid-${idx}`;
+      return `
+        <section aria-label="${nome}">
+          <div class="category-header" id="${slugId}"
+               role="button" tabindex="0"
+               aria-expanded="true" aria-controls="${gridId}">
+            <span class="category-header__title">${nome}</span>
+            <span class="category-header__icon">${CHEVRON_SVG}</span>
+          </div>
+          <div class="menu-grid" id="${gridId}">
+            ${produtos.map(menuItemHTML).join('')}
+          </div>
+        </section>`;
+    }
+
+    /* ── Renderização principal ── */
+    async function renderCardapio() {
+      const wrapper = document.getElementById('cardapio-wrapper');
+
+      try {
+        const todos = await API.getProdutos();
+
+        /* Agrupa por categoria, pulando Destaques (mostrados no index) */
+        const grupos = {};
+        for (const p of todos) {
+          if (!grupos[p.categoria]) grupos[p.categoria] = [];
+          grupos[p.categoria].push(p);
+        }
+
+        const categorias = Object.entries(grupos);
+        if (categorias.length === 0) {
+          wrapper.innerHTML = `
+            <div class="search-empty" style="padding:3rem;">
+              <p>Nenhum produto cadastrado no momento.</p>
+            </div>`;
+          return;
+        }
+
+        wrapper.innerHTML = categorias
+          .map(([nome, produtos], idx) => categoriaHTML(nome, produtos, idx))
+          .join('');
+
+        /* Re-bind carrinho */
+        Cart.bindProductButtons();
+
+        /* ── Accordion ── */
+        wrapper.querySelectorAll('.category-header').forEach(header => {
+          const gridId = header.getAttribute('aria-controls');
+          const grid = document.getElementById(gridId);
+
+          const toggle = () => {
+            const isOpen = header.getAttribute('aria-expanded') === 'true';
+            header.setAttribute('aria-expanded', !isOpen);
+            grid.classList.toggle('menu-grid--hidden', isOpen);
+            header.classList.toggle('category-header--collapsed', isOpen);
+          };
+
+          header.addEventListener('click', toggle);
+          header.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+          });
+        });
+
+      } catch (err) {
+        wrapper.innerHTML = `
+          <div style="padding:2rem;text-align:center;">
+            <p style="color:var(--color-danger,#e74c3c);font-weight:600;">Erro ao carregar cardápio</p>
+            <p style="font-size:.85rem;color:var(--color-gray-500);margin-top:.5rem;">${err.message}</p>
+            <p style="font-size:.8rem;color:var(--color-gray-400);margin-top:.5rem;">
+              Verifique se o servidor está rodando em <code>http://localhost:3000</code>
+            </p>
+          </div>`;
+      }
+    }
+
+    /* ── Busca em tempo real ── */
+    function initSearch() {
+      const searchInput = document.getElementById('search-input');
+      const wrapper = document.getElementById('cardapio-wrapper');
+
+      searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase().trim();
+
+        /* Remove aviso anterior se existir */
+        const prev = wrapper.querySelector('.search-empty');
+        if (prev) prev.remove();
+
+        const items = wrapper.querySelectorAll('.menu-item');
+        let visiveis = 0;
+
+        items.forEach(item => {
+          const nome = item.querySelector('.menu-item__name')?.textContent.toLowerCase() || '';
+          const desc = item.querySelector('.menu-item__desc')?.textContent.toLowerCase() || '';
+          const match = !query || nome.includes(query) || desc.includes(query);
+          item.classList.toggle('menu-item--hidden', !match);
+          if (match) visiveis++;
+        });
+
+        /* Mostra/oculta headers de categoria vazios */
+        wrapper.querySelectorAll('section').forEach(section => {
+          const menuGrid = section.querySelector('.menu-grid');
+          const visiveisNaCategoria = [...menuGrid.querySelectorAll('.menu-item')]
+            .filter(i => !i.classList.contains('menu-item--hidden')).length;
+          section.style.display = visiveisNaCategoria === 0 ? 'none' : '';
+        });
+
+        if (query && visiveis === 0) {
+          wrapper.insertAdjacentHTML('beforeend',
+            `<div class="search-empty">Nenhum produto encontrado para "<strong>${query}</strong>"</div>`
+          );
+        }
+      });
+    }
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', async () => {
+      await renderCardapio();
+      initSearch();
+    });
+  </script>
+</body>
+</html>

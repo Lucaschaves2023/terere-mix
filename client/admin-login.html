@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tereré Mix — Login Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Supabase JS — necessário para autenticação -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f1117;
+      --surface:  #1a1d27;
+      --surface2: #22263a;
+      --border:   rgba(255,255,255,.07);
+      --primary:  #2ecc71;
+      --red:      #e74c3c;
+      --text:     #e2e8f0;
+      --muted:    #8892a4;
+      --radius:   12px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.5);
+    }
+
+    .login-logo {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary) 0%, #7b61ff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .login-sub {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    input {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: .9rem;
+      font-family: inherit;
+      transition: border-color .2s;
+      outline: none;
+    }
+
+    input:focus { border-color: var(--primary); }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+
+    .btn-login:hover  { opacity: .9; }
+    .btn-login:active { transform: scale(.98); }
+    .btn-login:disabled { opacity: .6; cursor: not-allowed; }
+
+    .error-msg {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: rgba(231,76,60,.12);
+      border: 1px solid rgba(231,76,60,.25);
+      border-radius: 8px;
+      font-size: .82rem;
+      color: var(--red);
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: .78rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .back-link:hover { color: var(--text); }
+
+    /* Tela de "Supabase não configurado" */
+    .dev-notice {
+      background: rgba(243,156,18,.1);
+      border: 1px solid rgba(243,156,18,.25);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: .82rem;
+      color: #f39c12;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .dev-notice.visible { display: block; }
+
+    .btn-dev {
+      width: 100%;
+      margin-top: 14px;
+      padding: 11px;
+      background: rgba(243,156,18,.15);
+      color: #f39c12;
+      border: 1px solid rgba(243,156,18,.25);
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .btn-dev:hover { background: rgba(243,156,18,.25); }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="login-logo">🧉 Tereré Mix</div>
+    <div class="login-sub">Painel Administrativo — Acesso Restrito</div>
+
+    <!-- Formulário de login (visível quando Supabase estiver configurado) -->
+    <form id="form-login">
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" placeholder="admin@terere.com" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn-login" id="btn-login">Entrar</button>
+      <div class="error-msg" id="error-msg"></div>
+    </form>
+
+    <!-- Aviso de modo desenvolvimento (visível quando Supabase não estiver configurado) -->
+    <div class="dev-notice" id="dev-notice">
+      <strong>⚠️ Modo Desenvolvimento</strong><br>
+      Supabase não está configurado no <code>.env</code>.<br>
+      O painel admin está sendo aberto sem autenticação.<br><br>
+      Para ativar o login, configure:<br>
+      <code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code> e <code>SUPABASE_JWT_SECRET</code>
+      <button class="btn-dev" onclick="window.location.href='admin.html'">
+        Entrar em Modo Dev →
+      </button>
+    </div>
+
+    <a href="index.html" class="back-link">← Voltar para a loja</a>
+  </div>
+
+  <script>
+    (async () => {
+      const formEl   = document.getElementById('form-login');
+      const btnLogin = document.getElementById('btn-login');
+      const errorEl  = document.getElementById('error-msg');
+      const devEl    = document.getElementById('dev-notice');
+
+      function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.classList.add('visible');
+      }
+      function hideError() {
+        errorEl.classList.remove('visible');
+      }
+
+      try {
+        // Busca configuração do backend
+        const cfg = await fetch('/api/config').then(r => r.json());
+
+        if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) {
+          // Supabase não configurado — mostra aviso de modo dev
+          formEl.style.display = 'none';
+          devEl.classList.add('visible');
+          return;
+        }
+
+        // Inicializa Supabase
+        const supabase = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+        // Se já tiver sessão ativa, vai direto para o admin
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          window.location.href = 'admin.html';
+          return;
+        }
+
+        // Processa o formulário de login
+        formEl.addEventListener('submit', async e => {
+          e.preventDefault();
+          hideError();
+          btnLogin.disabled = true;
+          btnLogin.textContent = 'Entrando…';
+
+          const email = document.getElementById('email').value.trim();
+          const senha = document.getElementById('senha').value;
+
+          try {
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+            if (error) throw error;
+            if (data.session) {
+              window.location.href = 'admin.html';
+            }
+          } catch (err) {
+            const msg = err.message || 'Erro ao fazer login.';
+            if (msg.includes('Invalid login credentials')) {
+              showError('E-mail ou senha incorretos. Tente novamente.');
+            } else if (msg.includes('Email not confirmed')) {
+              showError('Confirme seu e-mail antes de entrar.');
+            } else {
+              showError(msg);
+            }
+            btnLogin.disabled = false;
+            btnLogin.textContent = 'Entrar';
+          }
+        });
+
+      } catch (err) {
+        showError('Erro de conexão. Verifique se o servidor está rodando.');
+        console.error('[LOGIN]', err);
+      }
+    })();
+  </script>
+</body>
+</html>

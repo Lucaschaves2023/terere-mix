@@ -1,0 +1,48 @@
+/* ============================================
+   TERERÉ MIX - Main Stylesheet
+   Imports all partials in correct order
+   ============================================ */
+
+@import 'variables.css';
+@import 'reset.css';
+@import 'components.css';
+
+/* ── Page-specific overrides ── */
+
+/* Home page adjustments */
+.home-page .product-grid {
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--space-md);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reorder-card {
+    min-width: 250px;
+  }
+
+  .top-header__title {
+    font-size: var(--font-size-md);
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 769px) {
+  .product-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
