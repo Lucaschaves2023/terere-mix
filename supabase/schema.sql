@@ -80,8 +80,47 @@ CREATE TABLE IF NOT EXISTS coupons (
   updated_at          TIMESTAMPTZ   DEFAULT now()
 );
 
+-- ── Horários de Funcionamento ────────────────
+CREATE TABLE IF NOT EXISTS horarios_funcionamento (
+  id            BIGSERIAL   PRIMARY KEY,
+  dia_semana    INTEGER     NOT NULL UNIQUE CHECK (dia_semana BETWEEN 0 AND 6),
+  aberto        BOOLEAN     NOT NULL DEFAULT false,
+  hora_abre     TEXT,
+  hora_fecha    TEXT,
+  atualizado_em TIMESTAMPTZ DEFAULT now()
+);
+
+INSERT INTO horarios_funcionamento (dia_semana, aberto, hora_abre, hora_fecha) VALUES
+  (0, true,  '18:00', '23:50'),
+  (1, true,  '16:00', '23:50'),
+  (2, true,  '16:00', '23:50'),
+  (3, true,  '16:00', '23:50'),
+  (4, true,  '16:00', '23:50'),
+  (5, true,  '16:00', '23:50'),
+  (6, true,  '16:00', '23:50')
+ON CONFLICT (dia_semana) DO NOTHING;
+
+-- ── Promoções Relâmpago ───────────────────────
+CREATE TABLE IF NOT EXISTS promocoes (
+  id                BIGSERIAL     PRIMARY KEY,
+  titulo            TEXT          NOT NULL,
+  descricao         TEXT,
+  preco_original    NUMERIC(10,2),
+  preco_promocional NUMERIC(10,2) NOT NULL CHECK (preco_promocional >= 0),
+  imagem            TEXT,
+  ativo             BOOLEAN       NOT NULL DEFAULT true,
+  ordem             INTEGER       NOT NULL DEFAULT 0,
+  data_inicio       DATE,
+  data_fim          DATE,
+  produto_id        BIGINT        REFERENCES produtos(id) ON DELETE SET NULL,
+  criado_em         TIMESTAMPTZ   DEFAULT now(),
+  atualizado_em     TIMESTAMPTZ   DEFAULT now()
+);
+
 -- ── Índices ──────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_pedidos_status    ON pedidos(status);
 CREATE INDEX IF NOT EXISTS idx_pedidos_criado_em ON pedidos(criado_em);
+CREATE INDEX IF NOT EXISTS idx_pedidos_telefone  ON pedidos(telefone);
 CREATE INDEX IF NOT EXISTS idx_itens_pedido_id   ON itens_pedido(pedido_id);
 CREATE INDEX IF NOT EXISTS idx_mov_produto_id    ON estoque_movimentacao(produto_id);
+CREATE INDEX IF NOT EXISTS idx_promocoes_ativo   ON promocoes(ativo);

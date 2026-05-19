@@ -1,6 +1,6 @@
 /* ============================================
    Tereré Mix — Pedidos.js
-   Carrega e renderiza pedidos da API
+   Carrega pedidos do cliente por WhatsApp
    ============================================ */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -52,6 +52,17 @@ function fmtData(str) {
 function orderCardHTML(p) {
   const statusLabel = STATUS_LABEL[p.status] || p.status;
   const statusClass = STATUS_CLASS[p.status] || '';
+
+  // Resumo dos itens (da coluna itens que vem do JSON)
+  let resumoItens = '';
+  try {
+    const itens = Array.isArray(p.itens) ? p.itens : (p.itens ? JSON.parse(p.itens) : []);
+    if (itens && itens.length > 0) {
+      resumoItens = itens.slice(0, 3).map(i => `${i.quantidade}× ${i.nome_produto}`).join(', ');
+      if (itens.length > 3) resumoItens += ` e mais ${itens.length - 3}...`;
+    }
+  } catch {}
+
   return `
     <article class="order-card" id="order-${p.id}">
       <div class="order-card__header">
@@ -61,8 +72,8 @@ function orderCardHTML(p) {
         </div>
         <span class="status-badge ${statusClass}">${statusLabel}</span>
       </div>
-      <div class="order-card__items">
-        ${p.resumo_itens || `<em style="color:var(--color-gray-500);font-size:.85rem;">Clique em detalhes para ver os itens</em>`}
+      <div class="order-card__items" style="font-size:.8rem;color:var(--color-gray-600);margin:.4rem 0;">
+        ${resumoItens || '<em style="color:var(--color-gray-500);font-size:.85rem;">Clique em detalhes para ver os itens</em>'}
       </div>
       <p class="order-card__total">${fmtBRL(p.total)}</p>
       <a href="detalhes-pedido.html?id=${p.id}"
@@ -76,6 +87,63 @@ async function renderPedidos() {
   const main = document.getElementById('pedidos-list');
   if (!main) return;
 
+  const whatsapp = localStorage.getItem('cliente_whatsapp');
+
+  if (!whatsapp) {
+    renderSemIdentificacao(main);
+    return;
+  }
+
+  mostrarCarregando(main);
+
+  try {
+    const pedidos = await API.getMeusPedidos(whatsapp);
+
+    if (!pedidos || !pedidos.length) {
+      main.innerHTML = `
+        <div class="cart-empty">
+          <div class="cart-empty__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <p class="cart-empty__title">Nenhum pedido encontrado</p>
+          <p class="cart-empty__text" style="font-size:.8rem;">
+            Número: <strong>${whatsapp}</strong>
+          </p>
+          <button class="btn btn--outline" style="margin-top:8px;font-size:.8rem;"
+                  onclick="localStorage.removeItem('cliente_whatsapp');location.reload();">
+            Usar outro WhatsApp
+          </button>
+          <a href="index.html" class="btn btn--primary" style="margin-top:8px;">Ver cardápio</a>
+        </div>`;
+      return;
+    }
+
+    main.innerHTML = `
+      <div style="padding:.5rem var(--space-lg) .25rem;display:flex;align-items:center;justify-content:space-between;">
+        <p style="font-size:.78rem;color:var(--color-gray-500);">📱 ${whatsapp}</p>
+        <button style="font-size:.75rem;color:var(--color-gray-500);background:none;border:none;cursor:pointer;text-decoration:underline;"
+                onclick="localStorage.removeItem('cliente_whatsapp');location.reload();">
+          Trocar
+        </button>
+      </div>
+      ${pedidos.map(orderCardHTML).join('')}
+    `;
+  } catch (err) {
+    main.innerHTML = `
+      <div style="padding:2rem;text-align:center;">
+        <p style="color:var(--color-danger);font-weight:600;">Erro ao carregar pedidos</p>
+        <p style="font-size:.85rem;color:var(--color-gray-500);margin-top:.5rem;">${err.message}</p>
+        <button class="btn btn--outline" style="margin-top:1rem;"
+                onclick="location.reload()">Tentar novamente</button>
+      </div>`;
+  }
+}
+
+function mostrarCarregando(main) {
   main.innerHTML = `
     <div style="padding:2rem;text-align:center;color:var(--color-gray-500);">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -87,38 +155,34 @@ async function renderPedidos() {
     </div>
     <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
   `;
+}
 
-  try {
-    const pedidos = await API.getPedidos({ limit: 50 });
-
-    if (!pedidos.length) {
-      main.innerHTML = `
-        <div class="cart-empty">
-          <div class="cart-empty__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                 stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-            </svg>
-          </div>
-          <p class="cart-empty__title">Nenhum pedido ainda</p>
-          <p class="cart-empty__text">Seus pedidos aparecerão aqui após a finalização</p>
-          <a href="index.html" class="btn btn--primary">Ver cardápio</a>
-        </div>`;
-      return;
-    }
-
-    main.innerHTML = pedidos.map(orderCardHTML).join('');
-  } catch (err) {
-    main.innerHTML = `
-      <div style="padding:2rem;text-align:center;">
-        <p style="color:var(--color-danger);font-weight:600;">Erro ao carregar pedidos</p>
-        <p style="font-size:.85rem;color:var(--color-gray-500);margin-top:.5rem;">${err.message}</p>
-        <p style="font-size:.8rem;color:var(--color-gray-400);margin-top:.5rem;">
-          Verifique se o servidor está rodando em <code>http://localhost:3000</code>
-        </p>
-      </div>`;
-  }
+function renderSemIdentificacao(main) {
+  main.innerHTML = `
+    <div class="cart-empty" style="padding:3rem 1.5rem 2rem;">
+      <div class="cart-empty__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <p class="cart-empty__title">Nenhum pedido ainda</p>
+      <p class="cart-empty__text">Faça seu primeiro pedido e ele aparecerá aqui.</p>
+      <a href="index.html" class="btn btn--primary" style="margin-top:1rem;display:inline-block;">
+        Ver cardápio
+      </a>
+      <button id="btn-identificar-pedidos"
+              style="display:block;margin:.75rem auto 0;background:none;border:none;
+                     color:var(--color-primary,#0B3D2E);font-size:.85rem;font-weight:600;
+                     cursor:pointer;text-decoration:underline;">
+        Já fiz um pedido — identificar-me
+      </button>
+    </div>
+  `;
+  document.getElementById('btn-identificar-pedidos').addEventListener('click', () => {
+    MiniLogin.abrir(() => renderPedidos());
+  });
 }
 
 /* ── Estilos extras de status ────────────── */

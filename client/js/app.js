@@ -1,16 +1,136 @@
 /* ============================================
-   Tereré Mix — App.js
-   Carrega produtos da API e renderiza o cardápio
+   Tereré Mix — App.js (Home)
+   Carrega produtos, horários e pedidos anteriores
    ============================================ */
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // ── Renderiza seção "Os mais pedidos" (Destaques) ──
+  // ── Mini Login ──────────────────────────────
+  initMiniLogin();
+
+  // ── Botão compartilhar ──────────────────────
+  initShareButton('btn-share');
+
+  // ── Horário de funcionamento dinâmico ───────
+  await renderHorarioDinamico();
+
+  // ── Renderiza seção "Os mais pedidos" ───────
   await renderDestaques();
 
-  // ── Renderiza seções do cardápio por categoria ──
+  // ── Renderiza "Peça de novo" dinâmico ───────
+  await renderReordenar();
+
+  // ── Renderiza cardápio por categoria ────────
   await renderCardapio();
 });
+
+/* ── Compartilhar ─────────────────────────── */
+function initShareButton(btnId) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    const url  = window.location.origin;
+    const data = {
+      title: 'Tereré Mix',
+      text:  'Tereré, ervas e salgados fresquinhos! Peça pelo cardápio digital 🧉',
+      url,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(data);
+      } else {
+        await navigator.clipboard.writeText(url);
+        showShareToast();
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(url);
+        showShareToast();
+      } catch { /* clipboard bloqueado */ }
+    }
+  });
+}
+
+function showShareToast() {
+  const t = document.createElement('div');
+  t.textContent = 'Link copiado para compartilhar.';
+  Object.assign(t.style, {
+    position: 'fixed', bottom: '80px', left: '50%',
+    transform: 'translateX(-50%)',
+    background: '#0B3D2E', color: '#fff',
+    padding: '10px 20px', borderRadius: '8px',
+    fontSize: '.85rem', fontWeight: '600',
+    zIndex: '9999', whiteSpace: 'nowrap',
+    boxShadow: '0 4px 12px rgba(0,0,0,.25)',
+  });
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+/* ── Horário dinâmico ─────────────────────── */
+async function renderHorarioDinamico() {
+  try {
+    const horarios = await API.getHorarios();
+    const info     = calcularStatus(horarios);
+
+    const storeInfo = document.querySelector('.store-info__details');
+    if (storeInfo) {
+      storeInfo.innerHTML = info.aberto
+        ? `<span style="color:#1a7a4a;font-weight:600;">● Aberto</span> até às ${fmtHora(info.hora_fecha)} <span>•</span> Pedido mín. R$ 5,00`
+        : `<span style="color:#c0392b;">● Fechado</span> — ${info.proximoTexto} <span>•</span> Pedido mín. R$ 5,00`;
+    }
+
+    const alertBanner = document.getElementById('alert-closed');
+    if (alertBanner) {
+      if (info.aberto) {
+        alertBanner.style.display = 'none';
+      } else {
+        alertBanner.textContent = `Loja fechada. ${info.proximoTexto}`;
+        alertBanner.style.display = '';
+      }
+    }
+  } catch { /* não bloqueia a home */ }
+}
+
+function calcularStatus(horarios) {
+  const agora     = new Date();
+  const diaSemana = agora.getDay();
+  const minAtual  = agora.getHours() * 60 + agora.getMinutes();
+
+  const hoje = horarios.find(h => h.dia_semana === diaSemana);
+
+  if (hoje && hoje.aberto && hoje.hora_abre && hoje.hora_fecha) {
+    const minAbre  = parseMins(hoje.hora_abre);
+    const minFecha = parseMins(hoje.hora_fecha);
+    if (minAtual >= minAbre && minAtual < minFecha) {
+      return { aberto: true, hora_fecha: hoje.hora_fecha };
+    }
+    if (minAtual < minAbre) {
+      return { aberto: false, proximoTexto: `Abre hoje às ${fmtHora(hoje.hora_abre)}` };
+    }
+  }
+
+  // Procura próximo dia com funcionamento
+  for (let d = 1; d <= 7; d++) {
+    const prox = horarios.find(h => h.dia_semana === (diaSemana + d) % 7);
+    if (prox && prox.aberto && prox.hora_abre) {
+      const nome = prox.nome_dia || prox.dia_semana;
+      return { aberto: false, proximoTexto: `Abre ${d === 1 ? 'amanhã' : nome} às ${fmtHora(prox.hora_abre)}` };
+    }
+  }
+
+  return { aberto: false, proximoTexto: 'Fechado no momento' };
+}
+
+function parseMins(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + (m || 0);
+}
+
+function fmtHora(hhmm) {
+  if (!hhmm) return '';
+  return hhmm.replace(':', 'h');
+}
 
 /* ── Helpers de formatação ────────────────── */
 function fmtBRL(value) {
@@ -77,6 +197,77 @@ async function renderDestaques() {
   }
 }
 
+/* ── Renderiza "Peça de novo" dinâmico ────── */
+async function renderReordenar() {
+  const section = document.querySelector('[aria-label="Peça de novo"]');
+  const wrapper = document.getElementById('reorder-scroll');
+  if (!section || !wrapper) return;
+
+  const whatsapp = localStorage.getItem('cliente_whatsapp');
+  if (!whatsapp) {
+    section.style.display = 'none';
+    return;
+  }
+
+  try {
+    const pedidos = await API.getMeusPedidos(whatsapp);
+    const recentes = (pedidos || []).filter(p => p.itens && p.itens.length > 0).slice(0, 4);
+
+    if (!recentes.length) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = '';
+    wrapper.innerHTML = recentes.map(p => {
+      const itens = Array.isArray(p.itens) ? p.itens : [];
+      const resumo = itens.slice(0, 2).map(i => `<span>${i.quantidade}</span> ${i.nome_produto}`).join('<br>');
+      const itensData = encodeURIComponent(JSON.stringify(
+        itens.map(i => ({
+          id:    String(i.produto_id),
+          name:  i.nome_produto,
+          price: parseFloat(i.preco_unit || 0),
+          image: '',
+          qty:   i.quantidade || 1,
+        }))
+      ));
+      return `
+        <article class="reorder-card">
+          <img src="assets/images/terere-mix.png" alt="Pedido #${p.id}"
+               class="reorder-card__image" loading="lazy">
+          <div class="reorder-card__info">
+            <div class="reorder-card__items">${resumo}</div>
+            <button class="reorder-card__action" data-reorder="${itensData}">
+              Adicionar ao carrinho
+            </button>
+          </div>
+        </article>`;
+    }).join('');
+
+    wrapper.querySelectorAll('[data-reorder]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        try {
+          const itens = JSON.parse(decodeURIComponent(btn.dataset.reorder));
+          const cartItems = Cart.getItems();
+          itens.forEach(item => {
+            const existing = cartItems.find(c => c.id === item.id);
+            if (existing) {
+              existing.quantity += item.qty || 1;
+            } else {
+              cartItems.push({ id: item.id, name: item.name, price: item.price, image: item.image, quantity: item.qty || 1 });
+            }
+          });
+          Cart.save(cartItems);
+          Cart.showToast(`${itens.length} item(s) adicionado(s)! 🧉`);
+        } catch { /* silencioso */ }
+      });
+    });
+
+  } catch {
+    section.style.display = 'none';
+  }
+}
+
 /* ── Renderiza cardápio completo por categorias ─ */
 async function renderCardapio() {
   const wrapper = document.getElementById('cardapio-dinamico');
@@ -114,4 +305,9 @@ async function renderCardapio() {
   } catch (err) {
     wrapper.innerHTML = `<p style="padding:1rem;color:var(--color-danger)">Erro ao carregar cardápio: ${err.message}</p>`;
   }
+}
+
+/* ── Mini Login ───────────────────────────── */
+function initMiniLogin() {
+  MiniLogin.init('btn-mini-login', renderReordenar);
 }

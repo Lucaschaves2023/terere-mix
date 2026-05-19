@@ -383,6 +383,13 @@ async function handleSubmit(e) {
     };
 
     const pedido = await API.criarPedido(payload);
+
+    // Salva WhatsApp no localStorage para "Meus Pedidos"
+    const telValue = form.telefone.value.trim();
+    if (telValue) {
+      localStorage.setItem('cliente_whatsapp', telValue);
+    }
+
     Cart.clear();
     fecharModal();
     Cart.showToast('Pedido enviado com sucesso! 🧉');

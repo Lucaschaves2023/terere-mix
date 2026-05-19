@@ -16,22 +16,127 @@
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* ── Accordion ── */
-    .category-header { cursor: pointer; user-select: none; }
-    .category-header__icon {
-      transition: transform .25s ease;
-      display: flex; align-items: center;
+    /* ── Abas de categorias ── */
+    .cat-tabs-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #fff;
+      border-bottom: 1px solid var(--color-border, #e9ecef);
+      box-shadow: 0 2px 6px rgba(0,0,0,.06);
     }
-    .category-header--collapsed .category-header__icon { transform: rotate(180deg); }
-    .menu-grid { transition: opacity .2s ease; }
-    .menu-grid--hidden { display: none; }
+    .cat-tabs {
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .cat-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      flex-shrink: 0;
+      scroll-snap-align: start;
+      padding: 12px 18px;
+      border: none;
+      background: none;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--color-gray-500, #6c757d);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .cat-tab.active {
+      color: var(--color-primary, #0B3D2E);
+      border-bottom-color: var(--color-primary, #0B3D2E);
+    }
 
-    /* ── Search highlight ── */
-    .menu-item--hidden { display: none; }
-    .search-empty {
-      padding: 2rem; text-align: center;
-      color: var(--color-gray-500); font-size: .875rem;
+    /* ── Promoções Relâmpago ── */
+    .promo-section {
+      padding: var(--space-lg, 16px);
+      background: linear-gradient(135deg, #fff9f0 0%, #fff3e0 100%);
+      border-bottom: 1px solid #f0e0c0;
     }
+    .promo-section__title {
+      font-size: .9rem;
+      font-weight: 700;
+      color: #b45309;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .promo-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .promo-scroll::-webkit-scrollbar { display: none; }
+    .promo-card {
+      flex-shrink: 0;
+      width: 200px;
+      scroll-snap-align: start;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.1);
+      border: 1px solid #f0e0c0;
+    }
+    .promo-card__img {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      background: #f5f5f5;
+    }
+    .promo-card__body {
+      padding: 10px 12px;
+    }
+    .promo-card__titulo {
+      font-size: .82rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+    .promo-card__desc {
+      font-size: .72rem;
+      color: var(--color-gray-500);
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .promo-card__precos {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .promo-card__de {
+      font-size: .72rem;
+      color: var(--color-gray-400, #adb5bd);
+      text-decoration: line-through;
+    }
+    .promo-card__por {
+      font-size: .9rem;
+      font-weight: 800;
+      color: #b45309;
+    }
+    .promo-card__btn {
+      width: 100%;
+      padding: 7px;
+      background: #0B3D2E;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .promo-card__btn:active { opacity: .85; }
 
     /* ── Estoque esgotado ── */
     .menu-item--esgotado { opacity: .5; }
@@ -42,6 +147,13 @@
       background: var(--color-danger, #e74c3c);
       color: #fff; padding: 1px 6px; border-radius: 4px;
       vertical-align: middle;
+    }
+
+    /* ── Search highlight ── */
+    .menu-item--hidden { display: none; }
+    .search-empty {
+      padding: 2rem; text-align: center;
+      color: var(--color-gray-500); font-size: .875rem;
     }
   </style>
 </head>
@@ -66,9 +178,21 @@
       </a>
     </div>
 
+    <!-- ═══ Promoções Relâmpago ═══ -->
+    <div id="promo-section-wrapper" style="display:none;">
+      <div class="promo-section">
+        <div class="promo-section__title">⚡ Promoções Relâmpago</div>
+        <div class="promo-scroll" id="promo-scroll"></div>
+      </div>
+    </div>
+
+    <!-- ═══ Abas de Categorias ═══ -->
+    <div class="cat-tabs-wrap" id="cat-tabs-wrap" style="display:none;">
+      <div class="cat-tabs" id="cat-tabs"></div>
+    </div>
+
     <!-- ═══ Cardápio (renderizado pela API) ═══ -->
     <div id="cardapio-wrapper">
-      <!-- Skeleton inicial -->
       <div id="cardapio-skeleton" style="padding: 1rem;">
         <div class="skeleton" style="height:40px;margin-bottom:12px;"></div>
         <div class="skeleton" style="height:80px;margin-bottom:8px;"></div>
@@ -114,29 +238,23 @@
   <script src="js/cart.js"></script>
   <script src="js/api.js"></script>
   <script src="js/checkout.js"></script>
+  <script src="js/services.js"></script>
   <script>
     /* ============================================================
        Tereré Mix — cardapio.html
-       Renderiza categorias e produtos dinâmicos via API.
-       Inclui: accordion de categorias, busca em tempo real.
+       Promoções relâmpago + Cardápio em abas + Busca
        ============================================================ */
 
-    /* ── Formatação ── */
+    let _todosProdutos   = [];
+    let _categoriaAtiva  = null;
+
     function fmtBRL(value) {
       return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    /* ── Ícone de seta (accordion) ── */
-    const CHEVRON_SVG = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="6 9 12 15 18 9"></polyline>
-      </svg>`;
-
-    /* ── HTML de um item do menu ── */
+    /* ── HTML de item do menu ── */
     function menuItemHTML(p) {
       const esgotado = p.estoque === 0;
-      const esgotadoBadge = esgotado ? `<span class="badge-esgotado">Esgotado</span>` : '';
       return `
         <article class="menu-item ${esgotado ? 'menu-item--esgotado' : ''}"
                  id="item-${p.id}"
@@ -145,34 +263,112 @@
                  data-product-price="${p.preco}"
                  data-product-image="${p.imagem || ''}">
           <div class="menu-item__info">
-            <p class="menu-item__name">${p.nome}${esgotadoBadge}</p>
+            <p class="menu-item__name">${p.nome}${esgotado ? '<span class="badge-esgotado">Esgotado</span>' : ''}</p>
             ${p.descricao ? `<p class="menu-item__desc" style="font-size:.75rem;color:var(--color-gray-500);margin:2px 0;">${p.descricao}</p>` : ''}
             <p class="menu-item__price">${fmtBRL(p.preco)}</p>
           </div>
           <img src="${p.imagem || 'assets/images/terere-mix.png'}"
-               alt="${p.nome}" class="menu-item__image" loading="lazy">
+               alt="${p.nome}" class="menu-item__image"
+               loading="lazy"
+               style="object-fit:cover;">
           <button class="btn-add-cart" data-add-to-cart
                   aria-label="Adicionar ${p.nome}"
                   ${esgotado ? 'disabled' : ''}>+</button>
         </article>`;
     }
 
-    /* ── HTML de uma categoria com accordion ── */
-    function categoriaHTML(nome, produtos, idx) {
-      const slugId = `cat-${idx}`;
-      const gridId = `grid-${idx}`;
-      return `
-        <section aria-label="${nome}">
-          <div class="category-header" id="${slugId}"
-               role="button" tabindex="0"
-               aria-expanded="true" aria-controls="${gridId}">
-            <span class="category-header__title">${nome}</span>
-            <span class="category-header__icon">${CHEVRON_SVG}</span>
-          </div>
-          <div class="menu-grid" id="${gridId}">
-            ${produtos.map(menuItemHTML).join('')}
-          </div>
-        </section>`;
+    /* ── Renderiza produtos da categoria ativa ── */
+    function renderCategoria(categoriaName) {
+      _categoriaAtiva = categoriaName;
+      const wrapper = document.getElementById('cardapio-wrapper');
+      const produtos = _todosProdutos.filter(p => p.categoria === categoriaName);
+
+      if (!produtos.length) {
+        wrapper.innerHTML = `<div class="search-empty"><p>Nenhum produto nesta categoria.</p></div>`;
+        return;
+      }
+
+      wrapper.innerHTML = `
+        <div class="menu-grid" id="menu-grid-ativo" style="padding-top:8px;">
+          ${produtos.map(menuItemHTML).join('')}
+        </div>`;
+
+      Cart.bindProductButtons();
+    }
+
+    /* ── Renderiza abas de categorias ── */
+    function renderTabs(categorias) {
+      const tabsWrap = document.getElementById('cat-tabs-wrap');
+      const tabs     = document.getElementById('cat-tabs');
+      if (!tabs) return;
+
+      tabsWrap.style.display = '';
+      tabs.innerHTML = categorias.map((cat, i) => `
+        <button class="cat-tab ${i === 0 ? 'active' : ''}"
+                data-cat="${cat}" type="button">${cat}</button>
+      `).join('');
+
+      tabs.querySelectorAll('.cat-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabs.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderCategoria(btn.dataset.cat);
+
+          // Limpa busca ao trocar de aba
+          const si = document.getElementById('search-input');
+          if (si) si.value = '';
+        });
+      });
+
+      // Rola a aba ativa para o centro
+      const primeiraTab = tabs.querySelector('.cat-tab.active');
+      if (primeiraTab) primeiraTab.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+    }
+
+    /* ── Renderiza promoções ── */
+    async function renderPromocoes(todosProdutos) {
+      try {
+        const promos = await API.getPromocoes();
+        if (!promos || !promos.length) return;
+
+        const wrapper = document.getElementById('promo-section-wrapper');
+        const scroll  = document.getElementById('promo-scroll');
+        wrapper.style.display = '';
+
+        scroll.innerHTML = promos.map(pr => {
+          const img     = pr.imagem || 'assets/images/terere-mix.png';
+          const deLabel = pr.preco_original
+            ? `<span class="promo-card__de">${fmtBRL(pr.preco_original)}</span>` : '';
+          const temProduto = pr.produto_id != null;
+          const produtoDB  = temProduto ? todosProdutos.find(p => p.id == pr.produto_id) : null;
+
+          const btnAttr = produtoDB
+            ? `data-product-id="${produtoDB.id}"
+               data-product-name="${produtoDB.nome}"
+               data-product-price="${produtoDB.preco}"
+               data-product-image="${produtoDB.imagem || ''}"
+               data-add-to-cart`
+            : `disabled style="opacity:.5;cursor:default;" title="Disponível na loja"`;
+
+          return `
+            <div class="promo-card">
+              <img src="${img}" alt="${pr.titulo}" class="promo-card__img" loading="lazy">
+              <div class="promo-card__body">
+                <p class="promo-card__titulo">${pr.titulo}</p>
+                ${pr.descricao ? `<p class="promo-card__desc">${pr.descricao}</p>` : ''}
+                <div class="promo-card__precos">
+                  ${deLabel}
+                  <span class="promo-card__por">${fmtBRL(pr.preco_promocional)}</span>
+                </div>
+                <button class="promo-card__btn" ${btnAttr}>
+                  ${produtoDB ? 'Adicionar' : 'Na loja'}
+                </button>
+              </div>
+            </div>`;
+        }).join('');
+
+        Cart.bindProductButtons();
+      } catch { /* promoções são opcionais */ }
     }
 
     /* ── Renderização principal ── */
@@ -180,57 +376,37 @@
       const wrapper = document.getElementById('cardapio-wrapper');
 
       try {
-        const todos = await API.getProdutos();
+        _todosProdutos = await API.getProdutos();
 
-        /* Agrupa por categoria, pulando Destaques (mostrados no index) */
-        const grupos = {};
-        for (const p of todos) {
-          if (!grupos[p.categoria]) grupos[p.categoria] = [];
-          grupos[p.categoria].push(p);
+        // Agrupa categorias (excluindo Destaques)
+        const categoriasMap = {};
+        for (const p of _todosProdutos) {
+          if (p.categoria === 'Destaques') continue;
+          if (!categoriasMap[p.categoria]) categoriasMap[p.categoria] = [];
+          categoriasMap[p.categoria].push(p);
         }
 
-        const categorias = Object.entries(grupos);
-        if (categorias.length === 0) {
-          wrapper.innerHTML = `
-            <div class="search-empty" style="padding:3rem;">
-              <p>Nenhum produto cadastrado no momento.</p>
-            </div>`;
+        const categorias = Object.keys(categoriasMap);
+
+        if (!categorias.length) {
+          wrapper.innerHTML = `<div class="search-empty" style="padding:3rem;"><p>Nenhum produto cadastrado no momento.</p></div>`;
           return;
         }
 
-        wrapper.innerHTML = categorias
-          .map(([nome, produtos], idx) => categoriaHTML(nome, produtos, idx))
-          .join('');
+        // Monta abas
+        renderTabs(categorias);
 
-        /* Re-bind carrinho */
-        Cart.bindProductButtons();
+        // Renderiza primeira categoria
+        renderCategoria(categorias[0]);
 
-        /* ── Accordion ── */
-        wrapper.querySelectorAll('.category-header').forEach(header => {
-          const gridId = header.getAttribute('aria-controls');
-          const grid = document.getElementById(gridId);
-
-          const toggle = () => {
-            const isOpen = header.getAttribute('aria-expanded') === 'true';
-            header.setAttribute('aria-expanded', !isOpen);
-            grid.classList.toggle('menu-grid--hidden', isOpen);
-            header.classList.toggle('category-header--collapsed', isOpen);
-          };
-
-          header.addEventListener('click', toggle);
-          header.addEventListener('keydown', e => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
-          });
-        });
+        // Carrega promoções em paralelo
+        await renderPromocoes(_todosProdutos);
 
       } catch (err) {
         wrapper.innerHTML = `
           <div style="padding:2rem;text-align:center;">
             <p style="color:var(--color-danger,#e74c3c);font-weight:600;">Erro ao carregar cardápio</p>
             <p style="font-size:.85rem;color:var(--color-gray-500);margin-top:.5rem;">${err.message}</p>
-            <p style="font-size:.8rem;color:var(--color-gray-400);margin-top:.5rem;">
-              Verifique se o servidor está rodando em <code>http://localhost:3000</code>
-            </p>
           </div>`;
       }
     }
@@ -238,39 +414,36 @@
     /* ── Busca em tempo real ── */
     function initSearch() {
       const searchInput = document.getElementById('search-input');
-      const wrapper = document.getElementById('cardapio-wrapper');
 
       searchInput.addEventListener('input', () => {
-        const query = searchInput.value.toLowerCase().trim();
+        const query   = searchInput.value.toLowerCase().trim();
+        const wrapper = document.getElementById('cardapio-wrapper');
 
-        /* Remove aviso anterior se existir */
-        const prev = wrapper.querySelector('.search-empty');
-        if (prev) prev.remove();
-
-        const items = wrapper.querySelectorAll('.menu-item');
-        let visiveis = 0;
-
-        items.forEach(item => {
-          const nome = item.querySelector('.menu-item__name')?.textContent.toLowerCase() || '';
-          const desc = item.querySelector('.menu-item__desc')?.textContent.toLowerCase() || '';
-          const match = !query || nome.includes(query) || desc.includes(query);
-          item.classList.toggle('menu-item--hidden', !match);
-          if (match) visiveis++;
-        });
-
-        /* Mostra/oculta headers de categoria vazios */
-        wrapper.querySelectorAll('section').forEach(section => {
-          const menuGrid = section.querySelector('.menu-grid');
-          const visiveisNaCategoria = [...menuGrid.querySelectorAll('.menu-item')]
-            .filter(i => !i.classList.contains('menu-item--hidden')).length;
-          section.style.display = visiveisNaCategoria === 0 ? 'none' : '';
-        });
-
-        if (query && visiveis === 0) {
-          wrapper.insertAdjacentHTML('beforeend',
-            `<div class="search-empty">Nenhum produto encontrado para "<strong>${query}</strong>"</div>`
-          );
+        if (!query) {
+          // Restaura a aba ativa
+          renderCategoria(_categoriaAtiva || Object.keys(
+            _todosProdutos.reduce((acc, p) => { if (p.categoria !== 'Destaques') acc[p.categoria] = true; return acc; }, {})
+          )[0]);
+          return;
         }
+
+        // Busca em todos os produtos
+        const encontrados = _todosProdutos.filter(p =>
+          p.categoria !== 'Destaques' &&
+          (p.nome.toLowerCase().includes(query) ||
+           (p.descricao || '').toLowerCase().includes(query))
+        );
+
+        if (!encontrados.length) {
+          wrapper.innerHTML = `<div class="search-empty">Nenhum produto encontrado para "<strong>${query}</strong>"</div>`;
+          return;
+        }
+
+        wrapper.innerHTML = `
+          <div class="menu-grid" style="padding-top:8px;">
+            ${encontrados.map(menuItemHTML).join('')}
+          </div>`;
+        Cart.bindProductButtons();
       });
     }
 

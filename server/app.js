@@ -47,10 +47,12 @@ app.get('/api/config', (req, res) => {
 const requireAdmin = require('./middleware/auth');
 
 // ── Rotas ─────────────────────────────────────
-const produtoRoutes = require('./routes/produtoRoutes');
-const pedidoRoutes  = require('./routes/pedidoRoutes');
-const estoqueRoutes = require('./routes/estoqueRoutes');
-const cupomRoutes   = require('./routes/cupomRoutes');
+const produtoRoutes  = require('./routes/produtoRoutes');
+const pedidoRoutes   = require('./routes/pedidoRoutes');
+const estoqueRoutes  = require('./routes/estoqueRoutes');
+const cupomRoutes    = require('./routes/cupomRoutes');
+const horarioRoutes  = require('./routes/horarioRoutes');
+const promocaoRoutes = require('./routes/promocaoRoutes');
 
 // Produtos: GET é público, escrita exige auth
 app.use('/api/produtos', (req, res, next) => {
@@ -79,6 +81,24 @@ app.use('/api/cupons', (req, res, next) => {
   if (req.method === 'POST' && req.path === '/validar') return next();
   requireAdmin(req, res, next);
 }, cupomRoutes);
+
+// Horários: GET é público, PUT exige admin
+app.use('/api/horarios', (req, res, next) => {
+  if (req.method === 'GET') return next();
+  requireAdmin(req, res, next);
+}, horarioRoutes);
+
+// Promoções: GET é público, escrita exige admin
+app.use('/api/promocoes', (req, res, next) => {
+  if (req.method === 'GET') return next();
+  requireAdmin(req, res, next);
+}, promocaoRoutes);
+
+// Meus pedidos (público — filtra por WhatsApp)
+app.get('/api/meus-pedidos', require('./controllers/pedidoController').meusPedidos);
+
+// Clientes (admin — lista clientes únicos extraídos dos pedidos)
+app.get('/api/admin/clientes', requireAdmin, require('./controllers/pedidoController').getClientes);
 
 // Health check
 app.get('/api/health', (req, res) => {

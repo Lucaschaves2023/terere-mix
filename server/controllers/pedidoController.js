@@ -188,4 +188,61 @@ async function atualizarStatus(req, res) {
   }
 }
 
-module.exports = { listar, buscarPorId, criar, atualizarStatus };
+// GET /api/meus-pedidos?whatsapp=  (público — filtra por telefone)
+async function meusPedidos(req, res) {
+  try {
+    const { whatsapp } = req.query;
+    if (!whatsapp || !String(whatsapp).trim()) {
+      return res.status(400).json({ success: false, message: 'Informe o WhatsApp.' });
+    }
+    const tel = String(whatsapp).replace(/\D/g, '');
+    if (tel.length < 10 || tel.length > 13) {
+      return res.status(400).json({ success: false, message: 'WhatsApp inválido.' });
+    }
+
+    const pedidos = await db.all(
+      `SELECT p.*,
+         (SELECT json_agg(
+           json_build_object(
+             'id',          i.id,
+             'produto_id',  i.produto_id,
+             'nome_produto',i.nome_produto,
+             'quantidade',  i.quantidade,
+             'preco_unit',  i.preco_unit
+           )
+         ) FROM itens_pedido i WHERE i.pedido_id = p.id) AS itens
+       FROM pedidos p
+       WHERE regexp_replace(COALESCE(p.telefone,''), '[^0-9]', '', 'g') = ?
+       ORDER BY p.criado_em DESC`,
+      [tel]
+    );
+
+    res.json({ success: true, data: pedidos });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+// GET /api/admin/clientes  (admin)
+async function getClientes(req, res) {
+  try {
+    const clientes = await db.all(
+      `SELECT
+         MAX(nome_cliente)  AS nome,
+         MAX(telefone)      AS telefone,
+         COUNT(*)           AS total_pedidos,
+         MAX(criado_em)     AS ultimo_pedido,
+         SUM(total)         AS total_gasto
+       FROM pedidos
+       WHERE telefone IS NOT NULL AND trim(telefone) != ''
+       GROUP BY regexp_replace(COALESCE(telefone,''), '[^0-9]', '', 'g')
+       ORDER BY ultimo_pedido DESC`,
+      []
+    );
+    res.json({ success: true, data: clientes });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+module.exports = { listar, buscarPorId, criar, atualizarStatus, meusPedidos, getClientes };

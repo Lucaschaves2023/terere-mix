@@ -207,6 +207,89 @@ const api = {
     if (!json.success) throw new Error(json.message);
     return json;
   },
+
+  /* ── Meus Pedidos (público por WhatsApp) ─── */
+
+  async getMeusPedidos(whatsapp) {
+    const res = await fetch(
+      `${API_BASE}/meus-pedidos?whatsapp=${encodeURIComponent(whatsapp)}`,
+      { headers: this._headers() }
+    );
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json.data;
+  },
+
+  /* ── Horários ───────────────────────────── */
+
+  async getHorarios() {
+    const res = await fetch(`${API_BASE}/horarios`, { headers: this._headers() });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json.data;
+  },
+
+  async atualizarHorarios(horarios) {
+    const res = await fetch(`${API_BASE}/horarios`, {
+      method: 'PUT',
+      headers: this._headers(),
+      body: JSON.stringify({ horarios }),
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json.data;
+  },
+
+  /* ── Promoções ──────────────────────────── */
+
+  async getPromocoes(incluirInativas = false) {
+    const url = incluirInativas
+      ? `${API_BASE}/promocoes?incluirInativas=true`
+      : `${API_BASE}/promocoes`;
+    const res = await fetch(url, { headers: this._headers() });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json.data;
+  },
+
+  async criarPromocao(payload) {
+    const res = await fetch(`${API_BASE}/promocoes`, {
+      method: 'POST',
+      headers: this._headers(),
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json.data;
+  },
+
+  async atualizarPromocao(id, payload) {
+    const res = await fetch(`${API_BASE}/promocoes/${id}`, {
+      method: 'PUT',
+      headers: this._headers(),
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json.data;
+  },
+
+  async excluirPromocao(id) {
+    const res = await fetch(`${API_BASE}/promocoes/${id}`, {
+      method: 'DELETE',
+      headers: this._headers(),
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json;
+  },
+
+  async getClientes() {
+    const res  = await fetch(`${API_BASE}/admin/clientes`, { headers: this._headers() });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json.data;
+  },
 };
 
 // Disponibiliza globalmente
