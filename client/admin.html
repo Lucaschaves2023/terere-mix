@@ -1718,7 +1718,7 @@
     }
 
     function abrirEditarCupom(id) {
-      const c = allCupons.find(x => x.id === id);
+      const c = allCupons.find(x => Number(x.id) === Number(id));
       if (!c) return;
       document.getElementById('cupom-id').value = c.id;
       document.getElementById('cupom-name').value = c.name;
@@ -1975,7 +1975,7 @@
     /* ═══ PRODUTOS — modal melhorado ═══ */
 
     function abrirEditarProduto(id) {
-      const p = allProdutos.find(x => x.id === id);
+      const p = allProdutos.find(x => Number(x.id) === Number(id));
       if (!p) return;
       document.getElementById('produto-id').value         = p.id;
       document.getElementById('produto-nome').value       = p.nome;
@@ -2160,7 +2160,7 @@
     }
 
     function abrirEditarPromocao(id) {
-      const p = allPromocoes.find(x => x.id === id);
+      const p = allPromocoes.find(x => Number(x.id) === Number(id));
       if (!p) return;
       document.getElementById('promocao-id').value             = p.id;
       document.getElementById('promocao-titulo').value         = p.titulo;
