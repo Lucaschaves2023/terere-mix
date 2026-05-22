@@ -152,7 +152,7 @@ app.post('/api/upload/promocao', requireAdmin, async (req, res) => {
     const resp = await fetch(uploadUrl, {
       method:  'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
         'Content-Type':  mimeType,
       },
       body: buffer,
