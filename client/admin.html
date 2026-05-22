@@ -2326,23 +2326,30 @@
       status.textContent = 'Enviando...';
 
       try {
-        const sb = AdminAuth._supabase;
-        if (!sb) throw new Error('Supabase não inicializado.');
+        const ext = file.name.split('.').pop().toLowerCase();
 
-        const ext  = file.name.split('.').pop();
-        const nome = `promo_${Date.now()}.${ext}`;
+        // Converte para base64
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = ev => resolve(ev.target.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
 
-        const { error } = await sb.storage
-          .from('PROMOCOES')
-          .upload(nome, file, { upsert: true });
+        const res  = await fetch('/api/upload/promocao', {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${window.API._authToken || ''}`,
+          },
+          body: JSON.stringify({ base64, mimeType: file.type, ext }),
+        });
 
-        if (error) throw error;
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
 
-        const { data } = sb.storage.from('PROMOCOES').getPublicUrl(nome);
-        const url = data.publicUrl;
-
-        document.getElementById('promocao-imagem').value = url;
-        _mostrarPreviewImgPromocao(url);
+        document.getElementById('promocao-imagem').value = json.url;
+        _mostrarPreviewImgPromocao(json.url);
       } catch (err) {
         status.textContent = `Erro: ${err.message}`;
       }

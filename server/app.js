@@ -137,6 +137,39 @@ app.use('/api/promocoes', (req, res, next) => {
   requireAdmin(req, res, next);
 }, promocaoRoutes);
 
+// Upload de imagem para promoções (admin)
+app.post('/api/upload/promocao', requireAdmin, async (req, res) => {
+  try {
+    const { base64, mimeType, ext } = req.body;
+    if (!base64 || !mimeType || !ext) {
+      return res.status(400).json({ success: false, message: 'Dados de upload inválidos.' });
+    }
+
+    const fileName  = `promo_${Date.now()}.${ext}`;
+    const buffer    = Buffer.from(base64, 'base64');
+    const uploadUrl = `${process.env.SUPABASE_URL}/storage/v1/object/PROMOCOES/${fileName}`;
+
+    const resp = await fetch(uploadUrl, {
+      method:  'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
+        'Content-Type':  mimeType,
+      },
+      body: buffer,
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      return res.status(500).json({ success: false, message: err.message || 'Erro no upload.' });
+    }
+
+    const publicUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/PROMOCOES/${fileName}`;
+    res.json({ success: true, url: publicUrl });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Meus pedidos (público — filtra por WhatsApp)
 app.get('/api/meus-pedidos', _publicLimiter, require('./controllers/pedidoController').meusPedidos);
 
