@@ -2333,12 +2333,12 @@
         const nome = `promo_${Date.now()}.${ext}`;
 
         const { error } = await sb.storage
-          .from('promocoes')
+          .from('PROMOCOES')
           .upload(nome, file, { upsert: true });
 
         if (error) throw error;
 
-        const { data } = sb.storage.from('promocoes').getPublicUrl(nome);
+        const { data } = sb.storage.from('PROMOCOES').getPublicUrl(nome);
         const url = data.publicUrl;
 
         document.getElementById('promocao-imagem').value = url;
