@@ -1345,8 +1345,26 @@
         </div>
         <div class="form-row">
           <div class="form-group" style="grid-column:1/-1;">
-            <label>URL da Imagem</label>
-            <input type="text" id="promocao-imagem" class="form-input" placeholder="https://... ou caminho relativo">
+            <label>Imagem da Promoção</label>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <!-- Preview -->
+              <div id="promocao-img-preview-wrap" style="display:none;">
+                <img id="promocao-img-preview" src="" alt="Preview"
+                     style="width:120px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">
+              </div>
+              <!-- Botão de upload -->
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <label for="promocao-img-file" class="btn btn--ghost btn--sm" style="cursor:pointer;margin:0;">
+                  📷 Escolher imagem
+                </label>
+                <input type="file" id="promocao-img-file" accept="image/*" style="display:none;">
+                <span id="promocao-img-status" style="font-size:.78rem;color:var(--color-gray-500);">Nenhuma imagem selecionada</span>
+                <button type="button" id="btn-limpar-img-promocao" class="btn btn--ghost btn--sm"
+                        style="display:none;color:var(--color-danger);">✕ Remover</button>
+              </div>
+              <!-- Campo hidden com a URL final -->
+              <input type="hidden" id="promocao-imagem">
+            </div>
           </div>
         </div>
         <div class="form-row">
@@ -2217,6 +2235,7 @@
       document.getElementById('promocao-descricao').value     = '';
       document.getElementById('promocao-imagem').value        = '';
       document.getElementById('promocao-ativo').checked       = true;
+      _limparPreviewImgPromocao();
       document.getElementById('modal-promocao-title').textContent = 'Nova Promoção';
       popularSelectPromocaoProdutos().then(() => {
         document.getElementById('promocao-produto-id').value = '';
@@ -2236,6 +2255,8 @@
       document.getElementById('promocao-ordem').value          = p.ordem ?? 0;
       document.getElementById('promocao-descricao').value      = p.descricao || '';
       document.getElementById('promocao-imagem').value         = p.imagem || '';
+      if (p.imagem) _mostrarPreviewImgPromocao(p.imagem);
+      else _limparPreviewImgPromocao();
       document.getElementById('promocao-ativo').checked        = !!p.ativo;
       document.getElementById('modal-promocao-title').textContent = `Editar: ${p.titulo}`;
       popularSelectPromocaoProdutos().then(() => {
@@ -2272,6 +2293,59 @@
         document.getElementById('modal-promocao').classList.remove('open');
         await loadPromocoes();
       } catch (err) { toast(err.message, 'error'); }
+    });
+
+    /* ── Upload de imagem para Supabase Storage ── */
+    function _mostrarPreviewImgPromocao(url) {
+      const wrap   = document.getElementById('promocao-img-preview-wrap');
+      const img    = document.getElementById('promocao-img-preview');
+      const status = document.getElementById('promocao-img-status');
+      const btnRem = document.getElementById('btn-limpar-img-promocao');
+      img.src = url;
+      wrap.style.display = '';
+      status.textContent = 'Imagem selecionada';
+      btnRem.style.display = '';
+    }
+
+    function _limparPreviewImgPromocao() {
+      document.getElementById('promocao-img-preview-wrap').style.display = 'none';
+      document.getElementById('promocao-img-preview').src = '';
+      document.getElementById('promocao-img-status').textContent = 'Nenhuma imagem selecionada';
+      document.getElementById('btn-limpar-img-promocao').style.display = 'none';
+      document.getElementById('promocao-img-file').value = '';
+      document.getElementById('promocao-imagem').value = '';
+    }
+
+    document.getElementById('btn-limpar-img-promocao').addEventListener('click', _limparPreviewImgPromocao);
+
+    document.getElementById('promocao-img-file').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const status = document.getElementById('promocao-img-status');
+      status.textContent = 'Enviando...';
+
+      try {
+        const sb = AdminAuth._supabase;
+        if (!sb) throw new Error('Supabase não inicializado.');
+
+        const ext  = file.name.split('.').pop();
+        const nome = `promo_${Date.now()}.${ext}`;
+
+        const { error } = await sb.storage
+          .from('promocoes')
+          .upload(nome, file, { upsert: true });
+
+        if (error) throw error;
+
+        const { data } = sb.storage.from('promocoes').getPublicUrl(nome);
+        const url = data.publicUrl;
+
+        document.getElementById('promocao-imagem').value = url;
+        _mostrarPreviewImgPromocao(url);
+      } catch (err) {
+        status.textContent = `Erro: ${err.message}`;
+      }
     });
 
     async function togglePromocao(id, atualAtivo) {
