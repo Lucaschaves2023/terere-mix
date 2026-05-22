@@ -65,6 +65,9 @@ app.use(express.static(path.join(__dirname, '..', 'client')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'client', 'index.html'));
 });
+app.get('/inicio', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'client', 'index.html'));
+});
 
 app.get('/:page', (req, res, next) => {
   const { page } = req.params;

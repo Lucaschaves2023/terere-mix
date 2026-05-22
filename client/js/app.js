@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Horário de funcionamento dinâmico ───────
   await renderHorarioDinamico();
 
+  // ── Renderiza promoções relâmpago ───────────
+  await renderPromocoesHome();
+
   // ── Renderiza seção "Os mais pedidos" ───────
   await renderDestaques();
 
@@ -320,4 +323,45 @@ async function renderCardapio() {
 /* ── Mini Login ───────────────────────────── */
 function initMiniLogin() {
   MiniLogin.init('btn-mini-login', renderReordenar);
+}
+
+/* ── Promoções Relâmpago (Home) ───────────── */
+async function renderPromocoesHome() {
+  const wrapper = document.getElementById('promo-section-wrapper');
+  const scroll  = document.getElementById('promo-scroll');
+  if (!wrapper || !scroll) return;
+
+  try {
+    const promos = await API.getPromocoes();
+    if (!promos || !promos.length) return;
+
+    const produtos = await API.getProdutos();
+
+    wrapper.style.display = '';
+    scroll.innerHTML = promos.map(pr => {
+      const img        = pr.imagem || 'assets/images/terere-mix.png';
+      const deLabel    = pr.preco_original
+        ? `<span class="promo-card__de">R$ ${parseFloat(pr.preco_original).toFixed(2).replace('.',',')}</span>` : '';
+      const produtoDB  = pr.produto_id ? produtos.find(p => p.id == pr.produto_id) : null;
+      const btnAttr    = produtoDB
+        ? `data-product-id="${produtoDB.id}" data-product-name="${produtoDB.nome}" data-product-price="${produtoDB.preco}" data-product-image="${produtoDB.imagem || ''}" data-add-to-cart`
+        : `disabled style="opacity:.5;cursor:default;"`;
+
+      return `
+        <div class="promo-card">
+          <img src="${img}" alt="${pr.titulo}" class="promo-card__img" loading="lazy">
+          <div class="promo-card__body">
+            <p class="promo-card__titulo">${pr.titulo}</p>
+            ${pr.descricao ? `<p class="promo-card__desc">${pr.descricao}</p>` : ''}
+            <div class="promo-card__precos">
+              ${deLabel}
+              <span class="promo-card__por">R$ ${parseFloat(pr.preco_promocional).toFixed(2).replace('.',',')}</span>
+            </div>
+            <button class="promo-card__btn" ${btnAttr}>${produtoDB ? 'Adicionar' : 'Ver no cardápio'}</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    Cart.bindProductButtons();
+  } catch { /* promoções são opcionais */ }
 }

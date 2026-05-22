@@ -2,7 +2,7 @@
 --  Tereré Mix — Row Level Security (RLS)
 --  Execute no Supabase SQL Editor: supabase.com → SQL Editor
 --
---  RESUMO DO MODELO DE ACESSO:
+--  RESUMO DO MODELO DE ACESSO:Q
 --  • produtos          → leitura pública; escrita somente admin (via API)
 --  • pedidos           → inserção pública (checkout); leitura/escrita via API
 --  • itens_pedido      → acesso apenas via API (backend)
@@ -87,6 +87,11 @@ CREATE POLICY "anon lê horários"
 --  STORAGE — bucket "produtos"
 --  Execute APÓS criar o bucket no painel Supabase → Storage
 -- ============================================================
+DROP POLICY IF EXISTS "Leitura pública bucket produtos" ON storage.objects;
+DROP POLICY IF EXISTS "Upload admin bucket produtos"    ON storage.objects;
+DROP POLICY IF EXISTS "Update admin bucket produtos"   ON storage.objects;
+DROP POLICY IF EXISTS "Delete admin bucket produtos"   ON storage.objects;
+
 CREATE POLICY "Leitura pública bucket produtos"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'produtos');
