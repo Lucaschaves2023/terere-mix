@@ -77,7 +77,7 @@ function orderCardHTML(p) {
     <article class="order-card" id="order-${p.id}">
       <div class="order-card__header">
         <div>
-          <p class="order-card__number">Pedido #${p.id}</p>
+          <p class="order-card__number">Pedido ${p.numped ? '#' + p.numped : '#' + p.id}</p>
           <p class="order-card__date">${fmtData(p.criado_em)}</p>
         </div>
         <span class="status-badge ${statusClass}">${statusLabel}</span>

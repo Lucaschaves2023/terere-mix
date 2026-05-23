@@ -37,13 +37,13 @@ async function buscarPorId(req, res) {
 // POST /api/produtos
 async function criar(req, res) {
   try {
-    const { nome, descricao, preco, categoria, imagem, estoque } = req.body;
+    const { nome, descricao, preco, categoria, imagem, estoque, marca, sabor } = req.body;
     if (!nome || preco == null) {
       return res.status(400).json({ success: false, message: 'Campos obrigatórios: nome, preco.' });
     }
     const { lastInsertRowid } = await db.run(
-      'INSERT INTO produtos (nome, descricao, preco, categoria, imagem, estoque) VALUES (?,?,?,?,?,?)',
-      [nome, descricao || null, preco, categoria || 'Geral', imagem || null, estoque || 0]
+      'INSERT INTO produtos (nome, descricao, preco, categoria, imagem, estoque, marca, sabor) VALUES (?,?,?,?,?,?,?,?)',
+      [nome, descricao || null, preco, categoria || 'Geral', imagem || null, estoque || 0, marca || null, sabor || null]
     );
     const novo = await db.get('SELECT * FROM produtos WHERE id = ?', [lastInsertRowid]);
     res.status(201).json({ success: true, data: novo });
@@ -56,11 +56,10 @@ async function criar(req, res) {
 // PUT /api/produtos/:id
 async function atualizar(req, res) {
   try {
-    const { nome, descricao, preco, categoria, imagem, estoque, ativo } = req.body;
+    const { nome, descricao, preco, categoria, imagem, estoque, ativo, marca, sabor } = req.body;
     const produto = await db.get('SELECT * FROM produtos WHERE id = ?', [req.params.id]);
     if (!produto) return res.status(404).json({ success: false, message: 'Produto não encontrado.' });
 
-    // Converte ativo para boolean explicitamente (0/1 ou true/false)
     const ativoVal = ativo !== undefined ? Boolean(ativo) : null;
 
     await db.exec(
@@ -71,7 +70,9 @@ async function atualizar(req, res) {
         categoria = COALESCE(?, categoria),
         imagem    = COALESCE(?, imagem),
         estoque   = COALESCE(?, estoque),
-        ativo     = COALESCE(?, ativo)
+        ativo     = COALESCE(?, ativo),
+        marca     = COALESCE(?, marca),
+        sabor     = COALESCE(?, sabor)
        WHERE id = ?`,
       [
         nome      ?? null,
@@ -81,6 +82,8 @@ async function atualizar(req, res) {
         imagem    ?? null,
         estoque   ?? null,
         ativoVal,
+        marca     ?? null,
+        sabor     ?? null,
         req.params.id,
       ]
     );

@@ -1150,6 +1150,16 @@
             <textarea id="produto-descricao" class="form-textarea" rows="2"></textarea>
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Marca <span style="font-size:.72rem;color:var(--muted);">opcional</span></label>
+            <input type="text" id="produto-marca" class="form-input" placeholder="Ex: Black Ervas, Mate Terra...">
+          </div>
+          <div class="form-group">
+            <label>Sabor <span style="font-size:.72rem;color:var(--muted);">opcional</span></label>
+            <input type="text" id="produto-sabor" class="form-input" placeholder="Ex: Dobble Black, Limão...">
+          </div>
+        </div>
         <!-- Imagem -->
         <div class="form-row">
           <div class="form-group" style="grid-column:1/-1;">
@@ -1476,9 +1486,10 @@
 
         tbody.innerHTML = allPedidos.map(p => {
           const tipoLabel = p.tipo === 'online' ? '🛵 Delivery' : '🏪 Balcão/Local';
+          const numLabel  = p.numped ? `#${p.numped}` : `#${p.id}`;
           return `
           <tr id="row-pedido-${p.id}" style="cursor:default;">
-            <td><strong>#${p.id}</strong></td>
+            <td><strong>${numLabel}</strong><br><span style="font-size:.7rem;color:var(--muted);">id:${p.id}</span></td>
             <td>${p.nome_cliente || '<em style="color:var(--muted)">Anônimo</em>'}</td>
             <td><span style="font-size:.75rem;background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px;">${tipoLabel}</span></td>
             <td style="white-space:nowrap;font-size:.8rem;">${fmtData(p.criado_em)}</td>
@@ -1509,7 +1520,9 @@
     async function mudarStatus(id, status) {
       try {
         await API.atualizarStatus(id, status);
-        toast(`Pedido #${id} → ${STATUS_LABEL[status]}`);
+        const p = allPedidos.find(x => x.id === id);
+        const numLabel = p?.numped ? `#${p.numped}` : `#${id}`;
+        toast(`Pedido ${numLabel} → ${STATUS_LABEL[status]}`);
         await loadPedidos();
         await loadStats();
       } catch (err) {
@@ -1813,6 +1826,9 @@
         const pedido = await API.getPedido(id);
         const itens = pedido.itens || [];
 
+        // Atualiza título com numped
+        titulo.textContent = pedido.numped ? `Pedido #${pedido.numped}` : `Pedido #${pedido.id}`;
+
         // Extrai info de observação — fallback para pedidos antigos sem campos estruturados
         const obs = pedido.observacao || '';
         const matchPag = obs.match(/\[PAGAMENTO:\s*([^\]]+)\]/);
@@ -1844,8 +1860,12 @@
               <div class="ped-detalhe__section-title">Informações Gerais</div>
               <div class="ped-detalhe__grid">
                 <div class="ped-detalhe__field">
-                  <span class="ped-detalhe__field-label">ID do Pedido</span>
-                  <span class="ped-detalhe__field-value">#${pedido.id}</span>
+                  <span class="ped-detalhe__field-label">Pedido</span>
+                  <span class="ped-detalhe__field-value" style="font-size:1.1rem;font-weight:700;color:var(--accent);">${pedido.numped ? '#' + pedido.numped : '#' + pedido.id}</span>
+                </div>
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">ID Técnico</span>
+                  <span class="ped-detalhe__field-value" style="font-size:.78rem;color:var(--muted);">${pedido.id}</span>
                 </div>
                 <div class="ped-detalhe__field">
                   <span class="ped-detalhe__field-label">Status</span>
@@ -1884,9 +1904,21 @@
             ${pedido.endereco ? `
             <div class="ped-detalhe__section">
               <div class="ped-detalhe__section-title">📍 Endereço de Entrega</div>
-              <div class="ped-detalhe__field">
-                <span class="ped-detalhe__field-label">Endereço completo</span>
-                <span class="ped-detalhe__field-value">${pedido.endereco}</span>
+              <div class="ped-detalhe__grid">
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">Endereço completo</span>
+                  <span class="ped-detalhe__field-value">${pedido.endereco}</span>
+                </div>
+                ${pedido.bairro ? `
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">Bairro</span>
+                  <span class="ped-detalhe__field-value">${pedido.bairro}</span>
+                </div>` : ''}
+                ${pedido.numero ? `
+                <div class="ped-detalhe__field">
+                  <span class="ped-detalhe__field-label">Número</span>
+                  <span class="ped-detalhe__field-value">${pedido.numero}</span>
+                </div>` : ''}
               </div>
             </div>` : ''}
 
@@ -2002,6 +2034,8 @@
       document.getElementById('produto-descricao').value  = p.descricao || '';
       document.getElementById('produto-estoque').value    = p.estoque ?? 0;
       document.getElementById('produto-ativo').checked    = !!p.ativo;
+      document.getElementById('produto-marca').value      = p.marca || '';
+      document.getElementById('produto-sabor').value      = p.sabor || '';
       document.getElementById('produto-imagem-url').value = p.imagem || '';
       _atualizarPreviewImagem(p.imagem || '');
       document.getElementById('produto-imagem-file').value = '';
@@ -2017,6 +2051,8 @@
       document.getElementById('produto-descricao').value  = '';
       document.getElementById('produto-estoque').value    = '0';
       document.getElementById('produto-ativo').checked    = true;
+      document.getElementById('produto-marca').value      = '';
+      document.getElementById('produto-sabor').value      = '';
       document.getElementById('produto-imagem-url').value = '';
       document.getElementById('produto-imagem-file').value = '';
       _atualizarPreviewImagem('');
@@ -2047,43 +2083,39 @@
       reader.readAsDataURL(file);
     });
 
-    // Retorna { url, filename } para permitir rollback e limpeza
+    // Upload via backend (usa SUPABASE_SERVICE_ROLE_KEY — seguro, sem dependência de RLS policy)
     async function _uploadImagemSupabase(file) {
-      const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-      const LIMITE_MB = 5;
+      const TIPOS_PERMITIDOS = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const LIMITE_MB = 4;
 
       if (!TIPOS_PERMITIDOS.includes(file.type)) {
-        throw new Error('Tipo de arquivo inválido. Use JPEG, PNG, WebP ou GIF.');
+        throw new Error('Tipo inválido. Use JPEG, PNG ou WebP.');
       }
       if (file.size > LIMITE_MB * 1024 * 1024) {
         throw new Error(`Arquivo muito grande. Máximo: ${LIMITE_MB} MB.`);
       }
 
-      const supabase = window.AdminAuth?._supabase;
-      if (!supabase) throw new Error('Supabase não configurado.');
-
-      const ext      = file.name.split('.').pop().toLowerCase();
-      const rand     = Math.random().toString(36).slice(2, 8);
-      const filename = `produto-${Date.now()}-${rand}.${ext}`;
-
-      const { error } = await supabase.storage.from('produtos').upload(filename, file, {
-        upsert: false,
-        cacheControl: '3600',
+      const ext    = file.name.split('.').pop().toLowerCase();
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = e => resolve(e.target.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
 
-      if (error) {
-        // Mensagens amigáveis para erros conhecidos do Storage
-        if (error.message?.includes('Bucket not found'))
-          throw new Error('Bucket de imagens não encontrado. Configure o bucket "produtos" no Supabase.');
-        if (error.message?.includes('not authorized') || error.statusCode === 403)
-          throw new Error('Sem permissão para fazer upload. Verifique se está logado como admin.');
-        if (error.message?.includes('Payload too large') || error.statusCode === 413)
-          throw new Error(`Arquivo muito grande. Máximo: ${LIMITE_MB} MB.`);
-        throw new Error(`Upload falhou: ${error.message}`);
-      }
+      const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || '';
+      const resp  = await fetch('/api/upload/produto', {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ base64, mimeType: file.type, ext }),
+      });
 
-      const { data: urlData } = supabase.storage.from('produtos').getPublicUrl(filename);
-      return { url: urlData.publicUrl, filename };
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.message || 'Erro no upload.');
+      return { url: data.url, filename: data.url.split('/').pop() };
     }
 
     // Extrai o filename de uma URL do Supabase Storage para permitir exclusão
@@ -2096,6 +2128,7 @@
     async function _removerDoStorage(filename) {
       if (!filename) return;
       try {
+        const token   = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || '';
         const supabase = window.AdminAuth?._supabase;
         if (supabase) await supabase.storage.from('produtos').remove([filename]);
       } catch { /* silencioso — limpeza é melhor-esforço */ }
@@ -2141,6 +2174,8 @@
           descricao: document.getElementById('produto-descricao').value.trim() || null,
           estoque:   parseInt(document.getElementById('produto-estoque').value) || 0,
           ativo:     document.getElementById('produto-ativo').checked ? 1 : 0,
+          marca:     document.getElementById('produto-marca').value.trim() || null,
+          sabor:     document.getElementById('produto-sabor').value.trim() || null,
         };
         if (imagemFinal !== null) payload.imagem = imagemFinal;
 

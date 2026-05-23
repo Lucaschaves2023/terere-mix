@@ -54,8 +54,8 @@ const _loginLimiter = rateLimit({
 });
 
 // ── Middleware ────────────────────────────────
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 // ── Servir frontend estático (/client) ────────
 app.use(express.static(path.join(__dirname, '..', 'client')));
@@ -164,6 +164,48 @@ app.post('/api/upload/promocao', requireAdmin, async (req, res) => {
     }
 
     const publicUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/PROMOCOES/${fileName}`;
+    res.json({ success: true, url: publicUrl });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Upload de imagem para produtos (admin)
+app.post('/api/upload/produto', requireAdmin, async (req, res) => {
+  try {
+    const { base64, mimeType, ext } = req.body;
+    if (!base64 || !mimeType || !ext) {
+      return res.status(400).json({ success: false, message: 'Dados de upload inválidos.' });
+    }
+
+    const ALLOWED_TYPES = ['image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
+    if (!ALLOWED_TYPES.includes(mimeType)) {
+      return res.status(400).json({ success: false, message: 'Formato não permitido. Use WebP, PNG ou JPEG.' });
+    }
+
+    const buffer = Buffer.from(base64, 'base64');
+    if (buffer.length > 4 * 1024 * 1024) {
+      return res.status(400).json({ success: false, message: 'Imagem muito grande. Máximo: 4MB.' });
+    }
+
+    const fileName  = `produto_${Date.now()}.${ext}`;
+    const uploadUrl = `${process.env.SUPABASE_URL}/storage/v1/object/produtos/${fileName}`;
+
+    const resp = await fetch(uploadUrl, {
+      method:  'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type':  mimeType,
+      },
+      body: buffer,
+    });
+
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      return res.status(500).json({ success: false, message: errData.message || 'Erro no upload.' });
+    }
+
+    const publicUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/produtos/${fileName}`;
     res.json({ success: true, url: publicUrl });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

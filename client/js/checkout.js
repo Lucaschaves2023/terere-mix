@@ -322,14 +322,19 @@ async function handleSubmit(e) {
     if (!bairro) { mostrarErro('Selecione o bairro de entrega.'); return; }
   }
 
-  // Monta endereço completo
+  // Monta endereço completo e captura bairro/numero separados
   let enderecoCompleto = null;
+  let bairroSeparado   = null;
+  let numeroSeparado   = null;
   if (tipoObj?.requerEndereco) {
     const bairro      = document.getElementById('co-bairro').value;
     const rua         = document.getElementById('co-rua').value.trim();
     const numero      = document.getElementById('co-numero').value.trim();
     const complemento = document.getElementById('co-complemento').value.trim();
     const referencia  = document.getElementById('co-referencia').value.trim();
+
+    bairroSeparado   = bairro  || null;
+    numeroSeparado   = numero  || null;
 
     const partes = [rua, numero, complemento, bairro, referencia].filter(Boolean);
     enderecoCompleto = partes.join(', ');
@@ -368,6 +373,8 @@ async function handleSubmit(e) {
       nome_cliente:        nome,
       telefone:            form.telefone.value.trim() || null,
       endereco:            enderecoCompleto,
+      bairro:              bairroSeparado,
+      numero:              numeroSeparado,
       observacao:          obsTexto || null,
       itens,
       // Campos financeiros estruturados (salvos permanentemente no banco)
@@ -392,7 +399,8 @@ async function handleSubmit(e) {
 
     Cart.clear();
     fecharModal();
-    Cart.showToast('Pedido enviado com sucesso! 🧉');
+    const numLabel = pedido.numped ? `#${pedido.numped}` : `#${pedido.id}`;
+    Cart.showToast(`Pedido ${numLabel} enviado com sucesso! 🧉`);
     setTimeout(() => {
       window.location.href = `pedidos.html?novo=${pedido.id}`;
     }, 1200);

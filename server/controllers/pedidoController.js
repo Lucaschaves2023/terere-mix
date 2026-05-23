@@ -44,6 +44,8 @@ async function criar(req, res) {
       nome_cliente,
       telefone,
       endereco,
+      bairro         = null,
+      numero         = null,
       observacao,
       itens,
       coupon_code         = null,
@@ -82,18 +84,24 @@ async function criar(req, res) {
       const acrescimoCred = parseFloat(credit_surcharge)  || 0;
       const totalFinal    = subtotalItens - descontoVal + taxaEntrega + acrescimoCred;
 
+      // Gera numped único via sequence (atômico, sem race condition)
+      const seqRow = await tx.get("SELECT nextval('pedidos_numped_seq') AS numped", []);
+      const numped = seqRow?.numped ?? null;
+
       // Insere pedido
       const { lastInsertRowid: pedidoId } = await tx.run(
         `INSERT INTO pedidos
-           (tipo, nome_cliente, telefone, endereco, total, observacao,
+           (tipo, nome_cliente, telefone, endereco, bairro, numero, total, observacao,
             coupon_code, discount_type, discount_percentage, discount_amount,
-            subtotal_amount, delivery_fee, credit_surcharge, payment_method)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            subtotal_amount, delivery_fee, credit_surcharge, payment_method, numped)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [
           tipo,
           nome_cliente || null,
           telefone     || null,
           endereco     || null,
+          bairro       || null,
+          numero       || null,
           totalFinal,
           observacao   || null,
           coupon_code  || null,
@@ -104,6 +112,7 @@ async function criar(req, res) {
           taxaEntrega   > 0 ? taxaEntrega   : null,
           acrescimoCred > 0 ? acrescimoCred : null,
           payment_method || null,
+          numped,
         ]
       );
 
@@ -119,7 +128,7 @@ async function criar(req, res) {
         );
         await tx.exec(
           "INSERT INTO estoque_movimentacao (produto_id, tipo, quantidade, motivo) VALUES (?,'saida',?,?)",
-          [produto.id, quantidade, `Pedido #${pedidoId}`]
+          [produto.id, quantidade, `Pedido #${numped || pedidoId}`]
         );
       }
 
@@ -141,7 +150,6 @@ async function criar(req, res) {
 
     res.status(201).json({ success: true, data: { ...pedido, itens: itensSalvos } });
   } catch (err) {
-    // Erros de negócio (estoque, produto) são expostos; erros internos são genéricos
     const isBusiness = /insuficiente|não encontrado|não ativo/i.test(err.message);
     const status = err.message.includes('insuficiente') ? 409 : (isBusiness ? 400 : 500);
     if (!isBusiness) console.error('[pedidos.criar]', err.message);

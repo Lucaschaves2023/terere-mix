@@ -14,12 +14,15 @@ CREATE TABLE IF NOT EXISTS produtos (
   imagem    TEXT,
   estoque   INTEGER       NOT NULL DEFAULT 0,
   ativo     BOOLEAN       NOT NULL DEFAULT true,
+  marca     TEXT,
+  sabor     TEXT,
   criado_em TIMESTAMPTZ   DEFAULT now()
 );
 
 -- ── Pedidos ──────────────────────────────────
 CREATE TABLE IF NOT EXISTS pedidos (
   id                  BIGSERIAL     PRIMARY KEY,
+  numped              BIGINT        UNIQUE,
   tipo                TEXT          NOT NULL DEFAULT 'online'
                         CHECK (tipo IN ('online','balcao')),
   status              TEXT          NOT NULL DEFAULT 'pendente'
@@ -27,6 +30,8 @@ CREATE TABLE IF NOT EXISTS pedidos (
   nome_cliente        TEXT,
   telefone            TEXT,
   endereco            TEXT,
+  bairro              TEXT,
+  numero              TEXT,
   total               NUMERIC(10,2) NOT NULL CHECK (total >= 0),
   observacao          TEXT,
   coupon_code         TEXT,
@@ -121,6 +126,13 @@ CREATE TABLE IF NOT EXISTS promocoes (
 CREATE INDEX IF NOT EXISTS idx_pedidos_status    ON pedidos(status);
 CREATE INDEX IF NOT EXISTS idx_pedidos_criado_em ON pedidos(criado_em);
 CREATE INDEX IF NOT EXISTS idx_pedidos_telefone  ON pedidos(telefone);
+CREATE INDEX IF NOT EXISTS idx_pedidos_bairro    ON pedidos(bairro);
+CREATE INDEX IF NOT EXISTS idx_pedidos_numped    ON pedidos(numped);
 CREATE INDEX IF NOT EXISTS idx_itens_pedido_id   ON itens_pedido(pedido_id);
 CREATE INDEX IF NOT EXISTS idx_mov_produto_id    ON estoque_movimentacao(produto_id);
 CREATE INDEX IF NOT EXISTS idx_promocoes_ativo   ON promocoes(ativo);
+CREATE INDEX IF NOT EXISTS idx_produtos_marca    ON produtos(marca);
+CREATE INDEX IF NOT EXISTS idx_produtos_sabor    ON produtos(sabor);
+
+-- ── Sequence para numped (número comercial do pedido) ─
+CREATE SEQUENCE IF NOT EXISTS pedidos_numped_seq START WITH 1001;
