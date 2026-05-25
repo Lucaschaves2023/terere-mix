@@ -6,6 +6,17 @@
   <meta name="description" content="Tereré Mix - Veja o histórico dos seus pedidos e repita seus favoritos.">
   <title>Tereré Mix - Meus Pedidos</title>
   <link rel="stylesheet" href="css/styles.css">
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <meta name="theme-color" content="#062f23">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tereré Mix">
+  <meta name="mobile-web-app-capable" content="yes">
 </head>
 <body>
   <div class="page-wrapper">
@@ -61,5 +72,6 @@
   <script src="js/api.js"></script>
   <script src="js/mini-login.js"></script>
   <script src="js/pedidos.js"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');</script>
 </body>
 </html>
