@@ -131,6 +131,23 @@
       flex-shrink: 0;
     }
 
+    .sidebar__group-label {
+      padding: 14px 20px 4px;
+      font-size: .62rem;
+      font-weight: 700;
+      color: rgba(136, 146, 164, .5);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .sidebar__divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 16px;
+    }
+
     .sidebar__footer {
       padding: 16px 20px;
       border-top: 1px solid var(--border);
@@ -756,6 +773,18 @@
         <div class="sidebar__sub">Painel Administrativo</div>
       </div>
       <nav class="sidebar__nav">
+
+        <!-- ── Operação ─────────────────────────── -->
+        <div class="sidebar__group-label">Operação</div>
+
+        <button class="sidebar__link" data-tab="dashboard" id="nav-dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          <span>Dashboard</span>
+        </button>
+
         <button class="sidebar__link active" data-tab="pedidos" id="nav-pedidos">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
@@ -766,6 +795,7 @@
           </svg>
           <span>Pedidos</span>
         </button>
+
         <button class="sidebar__link" data-tab="produtos" id="nav-produtos">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
@@ -775,6 +805,36 @@
           </svg>
           <span>Produtos</span>
         </button>
+
+        <button class="sidebar__link" data-tab="promocoes" id="nav-promocoes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+          <span>Promoções</span>
+        </button>
+
+        <!-- ── Gestão ────────────────────────────── -->
+        <div class="sidebar__divider"></div>
+        <div class="sidebar__group-label">Gestão</div>
+
+        <button class="sidebar__link" data-tab="cupons" id="nav-cupons">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+            <line x1="7" y1="7" x2="7.01" y2="7" />
+          </svg>
+          <span>Cupons / Descontos</span>
+        </button>
+
+        <button class="sidebar__link" data-tab="relatorios" id="nav-relatorios">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
+          </svg>
+          <span>Relatórios</span>
+        </button>
+
         <button class="sidebar__link" data-tab="estoque" id="nav-estoque">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
@@ -787,29 +847,7 @@
           </svg>
           <span>Estoque</span>
         </button>
-        <button class="sidebar__link" data-tab="cupons" id="nav-cupons">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
-            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-            <line x1="7" y1="7" x2="7.01" y2="7" />
-          </svg>
-          <span>Cupons / Descontos</span>
-        </button>
-        <button class="sidebar__link" data-tab="promocoes" id="nav-promocoes">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-          </svg>
-          <span>Promoções</span>
-        </button>
-        <button class="sidebar__link" data-tab="horarios" id="nav-horarios">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          <span>Funcionamento</span>
-        </button>
+
         <button class="sidebar__link" data-tab="clientes" id="nav-clientes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
@@ -820,6 +858,20 @@
           </svg>
           <span>Clientes</span>
         </button>
+
+        <!-- ── Configurações ─────────────────────── -->
+        <div class="sidebar__divider"></div>
+        <div class="sidebar__group-label">Configurações</div>
+
+        <button class="sidebar__link" data-tab="horarios" id="nav-horarios">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span>Funcionamento</span>
+        </button>
+
         <button class="sidebar__link" data-tab="empresa" id="nav-empresa">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
@@ -828,20 +880,7 @@
           </svg>
           <span>Empresa</span>
         </button>
-        <button class="sidebar__link" data-tab="dashboard" id="nav-dashboard">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-          </svg>
-          <span>Dashboard</span>
-        </button>
-        <button class="sidebar__link" data-tab="relatorios" id="nav-relatorios">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-            <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
-          </svg>
-          <span>Relatórios</span>
-        </button>
+
       </nav>
       <div class="sidebar__footer">
         <a href="index.html">← Ver loja</a>
