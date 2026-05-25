@@ -893,7 +893,7 @@ style.textContent = `
     display: block !important;
     font-size: .875rem !important;
     font-weight: 600 !important;
-    color: #f0f0f0 !important;
+    color: #1a1a1a !important;
     margin: 0 !important;
   }
 
