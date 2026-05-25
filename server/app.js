@@ -90,13 +90,14 @@ app.get('/api/config', (req, res) => {
 const requireAdmin = require('./middleware/auth');
 
 // ── Rotas ─────────────────────────────────────
-const produtoRoutes  = require('./routes/produtoRoutes');
-const pedidoRoutes   = require('./routes/pedidoRoutes');
-const estoqueRoutes  = require('./routes/estoqueRoutes');
-const cupomRoutes    = require('./routes/cupomRoutes');
-const horarioRoutes  = require('./routes/horarioRoutes');
-const promocaoRoutes = require('./routes/promocaoRoutes');
-const empresaRoutes  = require('./routes/empresaRoutes');
+const produtoRoutes   = require('./routes/produtoRoutes');
+const pedidoRoutes    = require('./routes/pedidoRoutes');
+const estoqueRoutes   = require('./routes/estoqueRoutes');
+const cupomRoutes     = require('./routes/cupomRoutes');
+const horarioRoutes   = require('./routes/horarioRoutes');
+const promocaoRoutes  = require('./routes/promocaoRoutes');
+const empresaRoutes   = require('./routes/empresaRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 // Produtos: GET é público, escrita exige auth
 app.use('/api/produtos', (req, res, next) => {
@@ -224,6 +225,9 @@ app.get('/api/meus-pedidos', _publicLimiter, require('./controllers/pedidoContro
 
 // Clientes (admin — lista clientes únicos extraídos dos pedidos)
 app.get('/api/admin/clientes', requireAdmin, require('./controllers/pedidoController').getClientes);
+
+// Analytics: Dashboard e Relatórios (admin)
+app.use('/api/admin/analytics', requireAdmin, analyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
