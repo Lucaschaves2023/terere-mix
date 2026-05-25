@@ -96,6 +96,7 @@ const estoqueRoutes  = require('./routes/estoqueRoutes');
 const cupomRoutes    = require('./routes/cupomRoutes');
 const horarioRoutes  = require('./routes/horarioRoutes');
 const promocaoRoutes = require('./routes/promocaoRoutes');
+const empresaRoutes  = require('./routes/empresaRoutes');
 
 // Produtos: GET é público, escrita exige auth
 app.use('/api/produtos', (req, res, next) => {
@@ -136,6 +137,12 @@ app.use('/api/promocoes', (req, res, next) => {
   if (req.method === 'GET') return next();
   requireAdmin(req, res, next);
 }, promocaoRoutes);
+
+// Empresa: GET é público, PUT exige admin
+app.use('/api/empresa', (req, res, next) => {
+  if (req.method === 'GET') return next();
+  requireAdmin(req, res, next);
+}, empresaRoutes);
 
 // Upload de imagem para promoções (admin)
 app.post('/api/upload/promocao', requireAdmin, async (req, res) => {

@@ -161,7 +161,8 @@ function produtoCardHTML(p, variant = 'grid') {
                data-product-id="${p.id}"
                data-product-name="${escapeHTML(p.nome)}"
                data-product-price="${p.preco}"
-               data-product-image="${escapeHTML(p.imagem || '')}">
+               data-product-image="${escapeHTML(p.imagem || '')}"
+               data-product-desc="${escapeHTML(p.descricao || '')}">
         ${estoqueBadge}
         <img src="${escapeHTML(p.imagem || 'assets/images/terere-mix.png')}"
              alt="${escapeHTML(p.nome)}" class="product-card__image" loading="lazy">
@@ -180,7 +181,8 @@ function produtoCardHTML(p, variant = 'grid') {
              data-product-id="${p.id}"
              data-product-name="${escapeHTML(p.nome)}"
              data-product-price="${p.preco}"
-             data-product-image="${escapeHTML(p.imagem || '')}">
+             data-product-image="${escapeHTML(p.imagem || '')}"
+             data-product-desc="${escapeHTML(p.descricao || '')}">
       <div class="menu-item__info">
         <p class="menu-item__name">${escapeHTML(p.nome)}</p>
         ${p.descricao ? `<p class="menu-item__desc">${escapeHTML(p.descricao)}</p>` : ''}

@@ -244,6 +244,118 @@
 
   </div>
 
+  <!-- ═══ Modal Produto ═══ -->
+  <div id="pm-overlay" class="pm-overlay" role="dialog" aria-modal="true" aria-label="Detalhes do produto">
+    <div class="pm-modal">
+      <button class="pm-close" id="pm-close" aria-label="Fechar">✕</button>
+      <img id="pm-img" src="" alt="" class="pm-img">
+      <div class="pm-body">
+        <h2 class="pm-name" id="pm-name"></h2>
+        <p class="pm-desc" id="pm-desc"></p>
+        <p class="pm-price" id="pm-price"></p>
+        <textarea class="pm-obs" id="pm-obs" rows="2" placeholder="Alguma observação? (ex: sem açúcar)"></textarea>
+        <div class="pm-footer">
+          <div class="pm-qty-ctrl">
+            <button class="pm-qty-btn" id="pm-minus" aria-label="Diminuir">−</button>
+            <span class="pm-qty-num" id="pm-qty">1</span>
+            <button class="pm-qty-btn" id="pm-plus" aria-label="Aumentar">+</button>
+          </div>
+          <button class="pm-add-btn" id="pm-add">Adicionar ao carrinho</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Botão WhatsApp Flutuante ═══ -->
+  <a id="wpp-float-btn" href="#" target="_blank" rel="noopener noreferrer"
+     class="wpp-float-btn" aria-label="Fale conosco no WhatsApp" style="display:none;">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+    </svg>
+  </a>
+
+  <style>
+    /* ── Product Modal ── */
+    .pm-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .22s ease;
+    }
+    .pm-overlay.open { opacity: 1; pointer-events: all; }
+    .pm-modal {
+      background: #fff; border-radius: 20px;
+      width: 100%; max-width: 340px;
+      overflow: hidden; position: relative;
+      transform: translateY(18px) scale(.96);
+      transition: transform .26s cubic-bezier(.34,1.56,.64,1);
+      box-shadow: 0 24px 64px rgba(0,0,0,.28);
+    }
+    .pm-overlay.open .pm-modal { transform: translateY(0) scale(1); }
+    .pm-close {
+      position: absolute; top: 10px; right: 10px; z-index: 10;
+      background: rgba(0,0,0,.35); border: none; color: #fff;
+      width: 28px; height: 28px; border-radius: 50%;
+      font-size: .8rem; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .2s;
+    }
+    .pm-close:hover { background: rgba(0,0,0,.55); }
+    .pm-img { width: 100%; height: 190px; object-fit: cover; display: block; background: #f5f5f5; }
+    .pm-body { padding: 14px 18px 18px; }
+    .pm-name { font-size: 1rem; font-weight: 700; color: #1a1a1a; margin-bottom: 3px; line-height: 1.3; }
+    .pm-desc { font-size: .78rem; color: #6c757d; margin-bottom: 6px; line-height: 1.4; }
+    .pm-price { font-size: 1.15rem; font-weight: 800; color: #0B3D2E; margin-bottom: 10px; }
+    .pm-obs {
+      width: 100%; border: 1.5px solid #e9ecef; border-radius: 10px;
+      padding: 8px 11px; font-size: .8rem; font-family: inherit;
+      resize: none; color: #333; background: #f8f9fa;
+      margin-bottom: 12px; display: block; transition: border-color .2s;
+    }
+    .pm-obs:focus { outline: none; border-color: #0B3D2E; }
+    .pm-footer { display: flex; align-items: center; gap: 10px; }
+    .pm-qty-ctrl {
+      display: flex; align-items: center;
+      background: #f1f3f5; border-radius: 10px; padding: 3px 5px;
+      gap: 4px; flex-shrink: 0;
+    }
+    .pm-qty-btn {
+      width: 30px; height: 30px; border-radius: 7px; border: none;
+      background: #fff; color: #0B3D2E; font-size: 1.1rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.1);
+      transition: background .15s; line-height: 1;
+    }
+    .pm-qty-btn:active { background: #e9ecef; }
+    .pm-qty-num { min-width: 24px; text-align: center; font-size: .95rem; font-weight: 700; color: #1a1a1a; }
+    .pm-add-btn {
+      flex: 1; background: #0B3D2E; color: #fff; border: none;
+      border-radius: 10px; padding: 12px;
+      font-size: .88rem; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: background .2s, transform .1s;
+    }
+    .pm-add-btn:active { background: #0a3328; transform: scale(.98); }
+
+    /* ── WhatsApp Float ── */
+    .wpp-float-btn {
+      position: fixed; bottom: 80px; right: 16px; z-index: 400;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: #25D366;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(37,211,102,.45);
+      text-decoration: none;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .wpp-float-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 22px rgba(37,211,102,.6);
+    }
+  </style>
+
   <script src="js/cart.js"></script>
   <script src="js/api.js"></script>
   <script src="js/checkout.js"></script>
@@ -270,7 +382,8 @@
                  data-product-id="${p.id}"
                  data-product-name="${p.nome}"
                  data-product-price="${p.preco}"
-                 data-product-image="${p.imagem || ''}">
+                 data-product-image="${p.imagem || ''}"
+                 data-product-desc="${p.descricao || ''}">
           <div class="menu-item__info">
             <p class="menu-item__name">${p.nome}${esgotado ? '<span class="badge-esgotado">Esgotado</span>' : ''}</p>
             ${p.descricao ? `<p class="menu-item__desc" style="font-size:.75rem;color:var(--color-gray-500);margin:2px 0;">${p.descricao}</p>` : ''}
@@ -461,6 +574,103 @@
       await renderCardapio();
       initSearch();
     });
+  </script>
+
+  <script>
+    /* ═══ Product Modal ═══ */
+    (function () {
+      let _product = null;
+      let _qty = 1;
+
+      const overlay = document.getElementById('pm-overlay');
+      const pmImg   = document.getElementById('pm-img');
+      const pmName  = document.getElementById('pm-name');
+      const pmDesc  = document.getElementById('pm-desc');
+      const pmPrice = document.getElementById('pm-price');
+      const pmObs   = document.getElementById('pm-obs');
+      const pmQty   = document.getElementById('pm-qty');
+      const pmAdd   = document.getElementById('pm-add');
+
+      function openModal(card) {
+        _product = {
+          id:    card.dataset.productId,
+          name:  card.dataset.productName,
+          price: parseFloat(card.dataset.productPrice),
+          image: card.dataset.productImage || '',
+        };
+        _qty = 1;
+        pmQty.textContent = '1';
+        pmObs.value = '';
+
+        pmImg.src = _product.image || 'assets/images/terere-mix.png';
+        pmImg.alt = _product.name;
+        pmName.textContent  = _product.name;
+        const descTxt = card.dataset.productDesc || '';
+        pmDesc.textContent  = descTxt;
+        pmDesc.style.display = descTxt ? '' : 'none';
+        pmPrice.textContent = Number(_product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+        _product = null;
+      }
+
+      // Abre modal ao clicar no card (não no botão +)
+      document.addEventListener('click', e => {
+        if (e.target.closest('[data-add-to-cart]')) return;
+        const card = e.target.closest('[data-product-id]');
+        if (!card) return;
+        if (card.classList.contains('menu-item--esgotado')) return;
+        e.preventDefault();
+        openModal(card);
+      });
+
+      document.getElementById('pm-close').addEventListener('click', closeModal);
+      overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+      document.getElementById('pm-minus').addEventListener('click', () => {
+        if (_qty > 1) { _qty--; pmQty.textContent = _qty; }
+      });
+      document.getElementById('pm-plus').addEventListener('click', () => {
+        _qty++;
+        pmQty.textContent = _qty;
+      });
+
+      pmAdd.addEventListener('click', () => {
+        if (!_product) return;
+        const obsVal = pmObs.value.trim();
+        const items = Cart.getItems();
+        const existing = items.find(i => i.id === _product.id && !i.obs && !obsVal);
+        if (existing) {
+          existing.quantity += _qty;
+        } else {
+          items.push({ ..._product, quantity: _qty, obs: obsVal });
+        }
+        Cart.save(items);
+        Cart.showToast(`${_product.name} adicionado! 🧉`);
+        closeModal();
+      });
+    })();
+
+    /* ═══ WhatsApp Flutuante ═══ */
+    (async () => {
+      try {
+        const empresa = await API.getEmpresa();
+        if (!empresa || !empresa.whatsapp) return;
+        const tel = String(empresa.whatsapp).replace(/\D/g, '');
+        if (!tel) return;
+        const msg = encodeURIComponent(empresa.mensagem_whatsapp || 'Olá! Vim pelo site da Tereré Mix.');
+        const btn = document.getElementById('wpp-float-btn');
+        btn.href = `https://wa.me/55${tel}?text=${msg}`;
+        btn.style.display = '';
+      } catch { /* silencioso */ }
+    })();
   </script>
 </body>
 </html>

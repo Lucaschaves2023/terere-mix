@@ -290,6 +290,26 @@ const api = {
     if (!json.success) throw new Error(json.message);
     return json.data;
   },
+
+  /* ── Empresa ────────────────────────────── */
+
+  async getEmpresa() {
+    const res  = await fetch(`${API_BASE}/empresa`, { headers: this._headers() });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json.data;
+  },
+
+  async updateEmpresa(payload) {
+    const res  = await fetch(`${API_BASE}/empresa`, {
+      method:  'PUT',
+      headers: this._headers(),
+      body:    JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json.data;
+  },
 };
 
 // Disponibiliza globalmente
