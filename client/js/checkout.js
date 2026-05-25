@@ -399,11 +399,7 @@ async function handleSubmit(e) {
 
     Cart.clear();
     fecharModal();
-    const numLabel = pedido.numped ? `#${pedido.numped}` : `#${pedido.id}`;
-    Cart.showToast(`Pedido ${numLabel} enviado com sucesso! 🧉`);
-    setTimeout(() => {
-      window.location.href = `pedidos.html?novo=${pedido.id}`;
-    }, 1200);
+    await mostrarConfirmacaoPedido(pedido);
   } catch (err) {
     mostrarErro(err.message);
     btn.disabled    = false;
@@ -444,6 +440,188 @@ function fecharModal() {
     overlay.remove();
     document.body.style.overflow = '';
   }, 300);
+}
+
+/* ── Confirmação pós-pedido ──────────────────────────────── */
+
+function _escConf(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function _fmtBRLConf(v) {
+  return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function gerarMensagemWhatsApp(pedido) {
+  const numLabel  = pedido.numped ? `#${pedido.numped}` : `#${pedido.id}`;
+  const linkAcomp = `${window.location.origin}/pedidos.html?novo=${pedido.id}`;
+  const itens     = Array.isArray(pedido.itens) ? pedido.itens : [];
+
+  const fmt = v => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const tipoMap = { delivery: 'Delivery', retirada: 'Retirada', balcao: 'Comer no Local' };
+  const tipoLabel = tipoMap[pedido.tipo] || pedido.tipo || '-';
+
+  const enderecoLinha = (pedido.tipo === 'delivery' && pedido.endereco)
+    ? `Endereço: ${pedido.endereco}`
+    : 'Endereço: Retirada na loja';
+
+  const listaItens = itens
+    .map(i => `➡️ ${i.quantidade}x ${i.nome_produto} — R$ ${fmt(parseFloat(i.preco_unit) * i.quantidade)}`)
+    .join('\n');
+
+  const subtotal = parseFloat(pedido.subtotal_amount || 0);
+  const desconto = parseFloat(pedido.discount_amount || 0);
+  const entrega  = parseFloat(pedido.delivery_fee    || 0);
+  const total    = parseFloat(pedido.total           || 0);
+
+  return [
+    `Pedido Tereré Mix: ${numLabel}`,
+    ``,
+    `Estimativa: 15 - 35 minutos`,
+    ``,
+    `Acompanhe o pedido👇:`,
+    linkAcomp,
+    ``,
+    `Tipo: ${tipoLabel}`,
+    enderecoLinha,
+    ``,
+    `NOME: ${pedido.nome_cliente || '-'}`,
+    `Fone: ${pedido.telefone || '-'}`,
+    ``,
+    `------------------------------`,
+    listaItens,
+    `------------------------------`,
+    ``,
+    `Itens: R$ ${fmt(subtotal)}`,
+    `Desconto: R$ ${fmt(desconto)}`,
+    `Entrega: R$ ${fmt(entrega)}`,
+    ``,
+    `TOTAL: R$ ${fmt(total)}`,
+    `------------------------------`,
+    ``,
+    `Pagamento: ${pedido.payment_method || 'Não informado'}`,
+  ].join('\n');
+}
+
+async function mostrarConfirmacaoPedido(pedido) {
+  // Busca WhatsApp/Instagram da empresa (com fallback)
+  let empresa = null;
+  try { empresa = await API.getEmpresa(); } catch { /* usa fallback */ }
+
+  const digitos    = (empresa?.whatsapp || '').replace(/\D/g, '');
+  const wppEmpresa = digitos
+    ? (digitos.startsWith('55') ? digitos : `55${digitos}`)
+    : '559285236009';
+  const instagram  = empresa?.instagram || null;
+
+  const numLabel = pedido.numped ? `#${pedido.numped}` : `#${pedido.id}`;
+  const itens    = Array.isArray(pedido.itens) ? pedido.itens : [];
+  const hora     = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+  const tipoMap = { delivery: '🚗 Delivery', retirada: '🏃 Retirada', balcao: '🍽️ Comer no Local' };
+  const tipoLabel = tipoMap[pedido.tipo] || pedido.tipo || '-';
+
+  const subtotal = parseFloat(pedido.subtotal_amount || 0);
+  const desconto = parseFloat(pedido.discount_amount || 0);
+  const entrega  = parseFloat(pedido.delivery_fee    || 0);
+  const total    = parseFloat(pedido.total           || 0);
+
+  const linhasItens = itens.map(i => `
+    <div class="conf-item">
+      <span class="conf-item__qty">${i.quantidade}×</span>
+      <span class="conf-item__name">${_escConf(i.nome_produto)}</span>
+      <span class="conf-item__price">${_fmtBRLConf(parseFloat(i.preco_unit) * i.quantidade)}</span>
+    </div>`).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'conf-overlay';
+  overlay.innerHTML = `
+    <div class="conf-modal" role="dialog" aria-modal="true" aria-label="Pedido confirmado">
+
+      <div class="conf-header">
+        <div class="conf-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+               stroke-linecap="round" stroke-linejoin="round" width="32" height="32">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h2 class="conf-title">Pedido Confirmado!</h2>
+        <p class="conf-subtitle">Pedido ${_escConf(numLabel)} &bull; ${hora}</p>
+      </div>
+
+      <div class="conf-body">
+
+        <div class="conf-info-row">
+          <span class="conf-info-icon">📦</span>
+          <div><p class="conf-info-label">Tipo</p><p class="conf-info-value">${tipoLabel}</p></div>
+        </div>
+        ${pedido.endereco ? `
+        <div class="conf-info-row">
+          <span class="conf-info-icon">📍</span>
+          <div><p class="conf-info-label">Endereço</p><p class="conf-info-value">${_escConf(pedido.endereco)}</p></div>
+        </div>` : ''}
+        <div class="conf-info-row">
+          <span class="conf-info-icon">⏱️</span>
+          <div><p class="conf-info-label">Estimativa</p><p class="conf-info-value">15 – 35 minutos</p></div>
+        </div>
+        ${pedido.payment_method ? `
+        <div class="conf-info-row">
+          <span class="conf-info-icon">💳</span>
+          <div><p class="conf-info-label">Pagamento</p><p class="conf-info-value">${_escConf(pedido.payment_method)}</p></div>
+        </div>` : ''}
+
+        <div class="conf-itens-wrap">${linhasItens}</div>
+
+        <div class="conf-totais">
+          <div class="conf-total-row"><span>Subtotal</span><span>${_fmtBRLConf(subtotal)}</span></div>
+          ${desconto > 0 ? `<div class="conf-total-row conf-desconto"><span>Desconto</span><span>− ${_fmtBRLConf(desconto)}</span></div>` : ''}
+          ${entrega  > 0 ? `<div class="conf-total-row"><span>Entrega</span><span>${_fmtBRLConf(entrega)}</span></div>` : ''}
+          <div class="conf-total-row conf-total-final">
+            <strong>Total</strong><strong>${_fmtBRLConf(total)}</strong>
+          </div>
+        </div>
+
+        <div class="conf-btns">
+          <a href="pedidos.html?novo=${pedido.id}" class="conf-btn conf-btn--outline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            Acompanhar Pedido
+          </a>
+          <button id="btn-conf-wpp" class="conf-btn conf-btn--wpp">
+            <svg viewBox="0 0 32 32" fill="currentColor" width="18" height="18">
+              <path d="M16 2C8.28 2 2 8.28 2 16c0 2.47.67 4.79 1.84 6.78L2 30l7.43-1.95A13.93 13.93 0 0 0 16 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm0 25.5c-2.21 0-4.28-.65-6.02-1.76l-.43-.27-4.41 1.16 1.17-4.3-.28-.45A11.47 11.47 0 0 1 4.5 16C4.5 9.6 9.6 4.5 16 4.5S27.5 9.6 27.5 16 22.4 27.5 16 27.5zm6.29-8.56c-.34-.17-2.02-1-2.34-1.11-.32-.11-.55-.17-.78.17-.23.34-.88 1.11-1.08 1.34-.2.23-.4.26-.74.09-.34-.17-1.44-.53-2.74-1.69-1.01-.9-1.7-2.02-1.9-2.36-.2-.34-.02-.52.15-.69.15-.15.34-.4.51-.6.17-.2.23-.34.34-.57.11-.23.06-.43-.03-.6-.09-.17-.78-1.88-1.07-2.57-.28-.67-.57-.58-.78-.59h-.67c-.23 0-.6.09-.91.43-.31.34-1.19 1.16-1.19 2.83s1.22 3.28 1.39 3.51c.17.23 2.4 3.66 5.82 5.14.81.35 1.44.56 1.93.72.81.26 1.55.22 2.14.13.65-.1 2.02-.83 2.3-1.62.29-.8.29-1.48.2-1.62-.09-.14-.32-.23-.66-.4z"/>
+            </svg>
+            Enviar no WhatsApp
+          </button>
+          ${instagram ? `
+          <a href="https://instagram.com/${_escConf(instagram.replace('@', ''))}"
+             target="_blank" rel="noopener noreferrer" class="conf-btn conf-btn--ig">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+            Ver no Instagram
+          </a>` : ''}
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#btn-conf-wpp').addEventListener('click', () => {
+    const msg = gerarMensagemWhatsApp(pedido);
+    window.open(`https://wa.me/${wppEmpresa}?text=${encodeURIComponent(msg)}`, '_blank');
+  });
+
+  requestAnimationFrame(() => overlay.classList.add('active'));
 }
 
 /* ── Estilos do modal (injetados dinamicamente) ─────────── */
@@ -613,7 +791,7 @@ style.textContent = `
     text-align: center;
   }
 
-  /* ── Desktop ── */
+  /* ── Desktop checkout ── */
   @media (min-width: 600px) {
     .checkout-modal {
       max-width: 500px; margin: auto;
@@ -622,6 +800,160 @@ style.textContent = `
     #checkout-overlay { align-items: center; }
     .co-payment { flex-direction: row; flex-wrap: wrap; }
     .co-payment__option { flex: 1; min-width: 130px; }
+  }
+
+  /* ══════════════════════════════════════
+     Confirmação pós-pedido
+  ══════════════════════════════════════ */
+  #conf-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 1100;
+    display: flex; align-items: flex-end;
+    opacity: 0; transition: opacity .3s ease;
+    backdrop-filter: blur(4px);
+  }
+  #conf-overlay.active { opacity: 1; }
+
+  .conf-modal {
+    width: 100%; max-height: 94vh;
+    overflow-y: auto;
+    background: var(--color-surface, #1a1a1a);
+    border-radius: 24px 24px 0 0;
+    transform: translateY(100%);
+    transition: transform .35s cubic-bezier(.32,1,.23,1);
+  }
+  #conf-overlay.active .conf-modal { transform: translateY(0); }
+
+  /* Header verde */
+  .conf-header {
+    background: linear-gradient(135deg, #0B3D2E 0%, #1a7a4a 100%);
+    padding: 28px 20px 24px;
+    text-align: center;
+    border-radius: 24px 24px 0 0;
+  }
+  .conf-check {
+    width: 56px; height: 56px;
+    background: rgba(255,255,255,.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+    color: #fff;
+    animation: conf-pop .4s cubic-bezier(.34,1.56,.64,1) .1s both;
+  }
+  @keyframes conf-pop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  .conf-title {
+    font-size: 1.25rem; font-weight: 700;
+    color: #fff; margin: 0 0 4px;
+  }
+  .conf-subtitle {
+    font-size: .85rem; color: rgba(255,255,255,.75);
+    margin: 0;
+  }
+
+  /* Body */
+  .conf-body { padding: 20px 16px 36px; }
+
+  /* Info rows */
+  .conf-info-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-border, rgba(255,255,255,.08));
+  }
+  .conf-info-icon { font-size: 1.1rem; line-height: 1.4; flex-shrink: 0; }
+  .conf-info-label {
+    font-size: .72rem; color: var(--color-gray-500, #888);
+    margin: 0 0 2px; text-transform: uppercase; letter-spacing: .04em;
+  }
+  .conf-info-value {
+    font-size: .875rem; font-weight: 600;
+    color: var(--color-text, #fff); margin: 0;
+  }
+
+  /* Itens */
+  .conf-itens-wrap {
+    margin: 14px 0 0;
+    border: 1px solid var(--color-border, rgba(255,255,255,.08));
+    border-radius: 12px; overflow: hidden;
+  }
+  .conf-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--color-border, rgba(255,255,255,.06));
+    font-size: .85rem;
+  }
+  .conf-item:last-child { border-bottom: none; }
+  .conf-item__qty {
+    font-weight: 700; color: var(--color-primary, #1a7a4a);
+    min-width: 22px;
+  }
+  .conf-item__name { flex: 1; color: var(--color-text, #fff); }
+  .conf-item__price { color: var(--color-gray-400, #aaa); font-size: .8rem; }
+
+  /* Totais */
+  .conf-totais {
+    margin: 14px 0 20px;
+    background: var(--color-gray-50, rgba(255,255,255,.04));
+    border-radius: 12px; padding: 12px 14px;
+    border: 1px solid var(--color-border, rgba(255,255,255,.08));
+  }
+  .conf-total-row {
+    display: flex; justify-content: space-between;
+    font-size: .85rem; padding: 3px 0;
+    color: var(--color-gray-400, #aaa);
+  }
+  .conf-desconto { color: #1a7a4a; }
+  .conf-total-final {
+    border-top: 1.5px solid var(--color-border, rgba(255,255,255,.12));
+    margin-top: 8px; padding-top: 10px;
+    font-size: 1rem;
+    color: var(--color-text, #fff);
+  }
+
+  /* Botões */
+  .conf-btns {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .conf-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 16px; border-radius: 12px;
+    font-size: .925rem; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    border: none; transition: opacity .2s, transform .1s;
+  }
+  .conf-btn:active { transform: scale(.98); }
+  .conf-btn--wpp {
+    background: #25D366; color: #fff;
+    order: -1;
+  }
+  .conf-btn--wpp:hover { opacity: .92; }
+  .conf-btn--outline {
+    background: transparent;
+    border: 1.5px solid var(--color-border, rgba(255,255,255,.2));
+    color: var(--color-text, #fff);
+  }
+  .conf-btn--outline:hover { background: rgba(255,255,255,.05); }
+  .conf-btn--ig {
+    background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    color: #fff;
+  }
+  .conf-btn--ig:hover { opacity: .92; }
+
+  /* Desktop confirmação */
+  @media (min-width: 600px) {
+    #conf-overlay { align-items: center; }
+    .conf-modal {
+      max-width: 480px; border-radius: 24px;
+      margin: auto; transform: translateY(40px) scale(.97);
+    }
+    #conf-overlay.active .conf-modal { transform: translateY(0) scale(1); }
+    .conf-header { border-radius: 24px 24px 0 0; }
+    .conf-btns { flex-direction: row; flex-wrap: wrap; }
+    .conf-btn--wpp { flex: 1 1 100%; order: -1; }
+    .conf-btn--outline, .conf-btn--ig { flex: 1; }
   }
 `;
 document.head.appendChild(style);
