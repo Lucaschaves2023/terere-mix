@@ -452,10 +452,11 @@
           const temProduto = pr.produto_id != null;
           const produtoDB  = temProduto ? todosProdutos.find(p => p.id == pr.produto_id) : null;
 
+          const precoFinal = pr.preco_promocional ?? produtoDB?.preco;
           const btnAttr = produtoDB
             ? `data-product-id="${produtoDB.id}"
                data-product-name="${produtoDB.nome}"
-               data-product-price="${produtoDB.preco}"
+               data-product-price="${precoFinal}"
                data-product-image="${produtoDB.imagem || ''}"
                data-add-to-cart`
             : `disabled style="opacity:.5;cursor:default;" title="Disponível na loja"`;

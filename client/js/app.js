@@ -366,8 +366,9 @@ async function renderPromocoesHome() {
       const deLabel    = pr.preco_original
         ? `<span class="promo-card__de">R$ ${parseFloat(pr.preco_original).toFixed(2).replace('.',',')}</span>` : '';
       const produtoDB  = pr.produto_id ? produtos.find(p => p.id == pr.produto_id) : null;
+      const precoFinal = pr.preco_promocional ?? produtoDB.preco;
       const btnAttr    = produtoDB
-        ? `data-product-id="${produtoDB.id}" data-product-name="${produtoDB.nome}" data-product-price="${produtoDB.preco}" data-product-image="${produtoDB.imagem || ''}" data-add-to-cart`
+        ? `data-product-id="${produtoDB.id}" data-product-name="${produtoDB.nome}" data-product-price="${precoFinal}" data-product-image="${produtoDB.imagem || ''}" data-add-to-cart`
         : `disabled style="opacity:.5;cursor:default;"`;
 
       return `

@@ -74,8 +74,20 @@ async function criar(req, res) {
         if (produto.estoque < item.quantidade) {
           throw new Error(`Estoque insuficiente para "${produto.nome}". Disponível: ${produto.estoque}.`);
         }
-        subtotalItens += parseFloat(produto.preco) * item.quantidade;
-        resolvidos.push({ produto, quantidade: item.quantidade });
+
+        // Verifica promoção ativa para este produto
+        const promo = await tx.get(
+          `SELECT preco_promocional FROM promocoes
+           WHERE produto_id = ? AND ativo = true
+             AND (data_inicio IS NULL OR data_inicio <= CURRENT_DATE)
+             AND (data_fim   IS NULL OR data_fim   >= CURRENT_DATE)
+           LIMIT 1`,
+          [produto.id]
+        );
+        const precoUnit = promo ? parseFloat(promo.preco_promocional) : parseFloat(produto.preco);
+
+        subtotalItens += precoUnit * item.quantidade;
+        resolvidos.push({ produto, quantidade: item.quantidade, precoUnit });
       }
 
       // Calcula total final
@@ -117,10 +129,10 @@ async function criar(req, res) {
       );
 
       // Itens + baixa de estoque + movimentação
-      for (const { produto, quantidade } of resolvidos) {
+      for (const { produto, quantidade, precoUnit } of resolvidos) {
         await tx.exec(
           'INSERT INTO itens_pedido (pedido_id, produto_id, nome_produto, preco_unit, quantidade) VALUES (?,?,?,?,?)',
-          [pedidoId, produto.id, produto.nome, produto.preco, quantidade]
+          [pedidoId, produto.id, produto.nome, precoUnit, quantidade]
         );
         await tx.exec(
           'UPDATE produtos SET estoque = estoque - ? WHERE id = ?',
