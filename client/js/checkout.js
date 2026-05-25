@@ -64,9 +64,9 @@ function criarModal() {
         </div>
 
         <div class="checkout-form__group">
-          <label for="co-telefone" class="checkout-form__label">WhatsApp</label>
+          <label for="co-telefone" class="checkout-form__label">WhatsApp *</label>
           <input type="tel" id="co-telefone" name="telefone"
-                 class="checkout-form__input" placeholder="(92) 99999-9999" autocomplete="tel">
+                 class="checkout-form__input" placeholder="(92) 99999-9999" autocomplete="tel" required>
         </div>
 
         <!-- Bloco entrega (somente delivery) -->
@@ -107,9 +107,11 @@ function criarModal() {
             <span>🚗</span>
             <span id="co-taxa-label">Selecione o bairro para calcular a entrega</span>
           </div>
+        </div>
 
-          <!-- Forma de pagamento (delivery only) -->
-          <div class="co-bloco__title" style="margin-top:14px;">💳 Forma de Pagamento *</div>
+        <!-- Forma de pagamento (sempre visível) -->
+        <div class="co-bloco">
+          <div class="co-bloco__title">💳 Forma de Pagamento *</div>
           <div class="co-payment" id="co-payment">
             ${pagamentosHTML}
           </div>
@@ -313,6 +315,9 @@ async function handleSubmit(e) {
   const nome = form.nome_cliente.value.trim();
   if (!nome) { mostrarErro('Por favor, informe seu nome.'); return; }
 
+  const tel = form.telefone.value.trim();
+  if (!tel) { mostrarErro('Por favor, informe seu WhatsApp para acompanhar o pedido.'); return; }
+
   const tipo    = form.tipo.value;
   const tipoObj = TIPOS_PEDIDO.find(t => t.id === tipo);
 
@@ -385,8 +390,7 @@ async function handleSubmit(e) {
       discount_amount:     calc.desconto    > 0 ? calc.desconto    : 0,
       delivery_fee:        calc.taxaEntrega > 0 ? calc.taxaEntrega : 0,
       credit_surcharge:    calc.acrescimo   > 0 ? calc.acrescimo   : 0,
-      payment_method:      tipoObj?.requerEndereco
-                             ? PagamentoService.getLabel(_pagamentoId) : null,
+      payment_method:      PagamentoService.getLabel(_pagamentoId),
     };
 
     const pedido = await API.criarPedido(payload);
@@ -462,10 +466,10 @@ function gerarMensagemWhatsApp(pedido) {
 
   const fmt = v => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const tipoMap = { delivery: 'Delivery', retirada: 'Retirada', balcao: 'Comer no Local' };
+  const tipoMap = { online: 'Delivery', balcao: 'Retirada / Local' };
   const tipoLabel = tipoMap[pedido.tipo] || pedido.tipo || '-';
 
-  const enderecoLinha = (pedido.tipo === 'delivery' && pedido.endereco)
+  const enderecoLinha = (pedido.tipo === 'online' && pedido.endereco)
     ? `Endereço: ${pedido.endereco}`
     : 'Endereço: Retirada na loja';
 
@@ -522,7 +526,7 @@ async function mostrarConfirmacaoPedido(pedido) {
   const itens    = Array.isArray(pedido.itens) ? pedido.itens : [];
   const hora     = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-  const tipoMap = { delivery: '🚗 Delivery', retirada: '🏃 Retirada', balcao: '🍽️ Comer no Local' };
+  const tipoMap = { online: '🛵 Delivery', balcao: '🏪 Retirada / Local' };
   const tipoLabel = tipoMap[pedido.tipo] || pedido.tipo || '-';
 
   const subtotal = parseFloat(pedido.subtotal_amount || 0);
