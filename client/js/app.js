@@ -328,7 +328,11 @@ async function renderCardapio() {
         tabsEl.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         renderCat(btn.dataset.cat);
-        btn.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+        // centraliza a aba selecionada horizontalmente sem mover a página
+        tabsEl.scrollTo({
+          left: btn.offsetLeft - (tabsEl.clientWidth / 2) + (btn.offsetWidth / 2),
+          behavior: 'smooth',
+        });
       });
     });
 

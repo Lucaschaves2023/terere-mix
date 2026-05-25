@@ -425,12 +425,14 @@
           // Limpa busca ao trocar de aba
           const si = document.getElementById('search-input');
           if (si) si.value = '';
+
+          // centraliza a aba selecionada horizontalmente sem mover a página
+          tabs.scrollTo({
+            left: btn.offsetLeft - (tabs.clientWidth / 2) + (btn.offsetWidth / 2),
+            behavior: 'smooth',
+          });
         });
       });
-
-      // Rola a aba ativa para o centro
-      const primeiraTab = tabs.querySelector('.cat-tab.active');
-      if (primeiraTab) primeiraTab.scrollIntoView({ inline: 'center', behavior: 'smooth' });
     }
 
     /* ── Renderiza promoções ── */
