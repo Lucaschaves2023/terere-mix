@@ -561,21 +561,33 @@ async function mostrarConfirmacaoPedido(pedido) {
 
         <div class="conf-info-row">
           <span class="conf-info-icon">📦</span>
-          <div><p class="conf-info-label">Tipo</p><p class="conf-info-value">${tipoLabel}</p></div>
+          <div>
+            <span class="conf-info-label">Tipo</span>
+            <span class="conf-info-value">${tipoLabel}</span>
+          </div>
         </div>
         ${pedido.endereco ? `
         <div class="conf-info-row">
           <span class="conf-info-icon">📍</span>
-          <div><p class="conf-info-label">Endereço</p><p class="conf-info-value">${_escConf(pedido.endereco)}</p></div>
+          <div>
+            <span class="conf-info-label">Endereço</span>
+            <span class="conf-info-value">${_escConf(pedido.endereco)}</span>
+          </div>
         </div>` : ''}
         <div class="conf-info-row">
           <span class="conf-info-icon">⏱️</span>
-          <div><p class="conf-info-label">Estimativa</p><p class="conf-info-value">15 – 35 minutos</p></div>
+          <div>
+            <span class="conf-info-label">Estimativa</span>
+            <span class="conf-info-value">15 – 35 minutos</span>
+          </div>
         </div>
         ${pedido.payment_method ? `
         <div class="conf-info-row">
           <span class="conf-info-icon">💳</span>
-          <div><p class="conf-info-label">Pagamento</p><p class="conf-info-value">${_escConf(pedido.payment_method)}</p></div>
+          <div>
+            <span class="conf-info-label">Pagamento</span>
+            <span class="conf-info-value">${_escConf(pedido.payment_method)}</span>
+          </div>
         </div>` : ''}
 
         <div class="conf-itens-wrap">${linhasItens}</div>
@@ -869,12 +881,20 @@ style.textContent = `
   }
   .conf-info-icon { font-size: 1.1rem; line-height: 1.4; flex-shrink: 0; }
   .conf-info-label {
-    font-size: .72rem; color: var(--color-gray-500, #888);
-    margin: 0 0 2px; text-transform: uppercase; letter-spacing: .04em;
+    display: block !important;
+    font-size: .72rem !important;
+    color: #999 !important;
+    margin: 0 0 2px !important;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 500 !important;
   }
   .conf-info-value {
-    font-size: .875rem; font-weight: 600;
-    color: var(--color-text, #fff); margin: 0;
+    display: block !important;
+    font-size: .875rem !important;
+    font-weight: 600 !important;
+    color: #f0f0f0 !important;
+    margin: 0 !important;
   }
 
   /* Itens */
