@@ -283,9 +283,11 @@ async function renderReordenar() {
   }
 }
 
-/* ── Renderiza cardápio completo por categorias ─ */
+/* ── Renderiza cardápio com abas horizontais ─ */
 async function renderCardapio() {
-  const wrapper = document.getElementById('cardapio-dinamico');
+  const wrapper   = document.getElementById('cardapio-dinamico');
+  const tabsWrap  = document.getElementById('home-cat-tabs-wrap');
+  const tabsEl    = document.getElementById('home-cat-tabs');
   if (!wrapper) return;
 
   wrapper.innerHTML = `<div class="loading-shimmer" style="height:200px;border-radius:12px;margin:1rem;"></div>`;
@@ -293,30 +295,45 @@ async function renderCardapio() {
   try {
     const todos = await API.getProdutos();
 
-    // Agrupa por categoria (excluindo Destaques, já mostrado acima)
-    const categorias = {};
+    const categoriasMap = {};
     for (const p of todos) {
       if (p.categoria === 'Destaques') continue;
-      if (!categorias[p.categoria]) categorias[p.categoria] = [];
-      categorias[p.categoria].push(p);
+      if (!categoriasMap[p.categoria]) categoriasMap[p.categoria] = [];
+      categoriasMap[p.categoria].push(p);
     }
 
-    let html = '';
-    for (const [cat, produtos] of Object.entries(categorias)) {
-      html += `
-        <section aria-label="${cat}">
-          <h2 class="section-title"
-              style="border-bottom:3px solid var(--color-primary);display:inline-block;margin-left:var(--space-lg);">
-            ${cat}
-          </h2>
-          <div class="menu-grid" id="menu-${cat.toLowerCase().replace(/\s/g,'-')}">
-            ${produtos.map(p => produtoCardHTML(p, 'list')).join('')}
-          </div>
-        </section>`;
+    const categorias = Object.keys(categoriasMap);
+
+    if (!categorias.length) {
+      wrapper.innerHTML = '<p style="padding:1rem;">Nenhum produto cadastrado.</p>';
+      return;
     }
 
-    wrapper.innerHTML = html || '<p style="padding:1rem;">Nenhum produto cadastrado.</p>';
-    Cart.bindProductButtons();
+    function renderCat(catName) {
+      wrapper.innerHTML = `
+        <div class="menu-grid" style="padding-top:8px;">
+          ${categoriasMap[catName].map(p => produtoCardHTML(p, 'list')).join('')}
+        </div>`;
+      Cart.bindProductButtons();
+    }
+
+    tabsWrap.style.display = '';
+    tabsEl.innerHTML = categorias.map((cat, i) => `
+      <button class="cat-tab ${i === 0 ? 'active' : ''}"
+              data-cat="${escapeHTML(cat)}" type="button">${escapeHTML(cat)}</button>
+    `).join('');
+
+    tabsEl.querySelectorAll('.cat-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabsEl.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderCat(btn.dataset.cat);
+        btn.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+      });
+    });
+
+    renderCat(categorias[0]);
+
   } catch (err) {
     wrapper.innerHTML = `<p style="padding:1rem;color:var(--color-danger)">Erro ao carregar cardápio: ${err.message}</p>`;
   }

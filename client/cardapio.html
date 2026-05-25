@@ -16,43 +16,6 @@
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* ── Abas de categorias ── */
-    .cat-tabs-wrap {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: #fff;
-      border-bottom: 1px solid var(--color-border, #e9ecef);
-      box-shadow: 0 2px 6px rgba(0,0,0,.06);
-    }
-    .cat-tabs {
-      display: flex;
-      gap: 0;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .cat-tabs::-webkit-scrollbar { display: none; }
-    .cat-tab {
-      flex-shrink: 0;
-      scroll-snap-align: start;
-      padding: 12px 18px;
-      border: none;
-      background: none;
-      font-size: .82rem;
-      font-weight: 600;
-      color: var(--color-gray-500, #6c757d);
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all .2s;
-      white-space: nowrap;
-    }
-    .cat-tab.active {
-      color: var(--color-primary, #0B3D2E);
-      border-bottom-color: var(--color-primary, #0B3D2E);
-    }
-
     /* ── Promoções Relâmpago ── */
     .promo-section {
       padding: var(--space-lg, 16px);
