@@ -7,7 +7,7 @@ const { db } = require('../models/db');
 
 async function getEmpresa(req, res) {
   try {
-    const empresa = await db.get('SELECT * FROM empresa WHERE id = 1');
+    const empresa = await db.get('SELECT * FROM public.empresa WHERE id = 1');
     res.json({ success: true, data: empresa || null });
   } catch (err) {
     console.error('[empresa.get]', err);
@@ -42,7 +42,7 @@ async function updateEmpresa(req, res) {
 
     // UPSERT atômico — insere ou atualiza o único registro (id = 1)
     const rows = await db.all(
-      `INSERT INTO empresa
+      `INSERT INTO public.empresa
          (id, nome_empresa, nome_fantasia, whatsapp, instagram,
           endereco, cidade, uf, horario_funcionamento,
           taxa_entrega_padrao, logo_url, mensagem_whatsapp, atualizado_em)
