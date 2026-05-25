@@ -520,7 +520,6 @@ async function mostrarConfirmacaoPedido(pedido) {
   const wppEmpresa = digitos
     ? (digitos.startsWith('55') ? digitos : `55${digitos}`)
     : '559285236009';
-  const instagram  = empresa?.instagram || null;
 
   const numLabel = pedido.numped ? `#${pedido.numped}` : `#${pedido.id}`;
   const itens    = Array.isArray(pedido.itens) ? pedido.itens : [];
@@ -602,28 +601,12 @@ async function mostrarConfirmacaoPedido(pedido) {
         </div>
 
         <div class="conf-btns">
-          <a href="pedidos.html?novo=${pedido.id}" class="conf-btn conf-btn--outline">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-            </svg>
-            Acompanhar Pedido
-          </a>
           <button id="btn-conf-wpp" class="conf-btn conf-btn--wpp">
             <svg viewBox="0 0 32 32" fill="currentColor" width="18" height="18">
               <path d="M16 2C8.28 2 2 8.28 2 16c0 2.47.67 4.79 1.84 6.78L2 30l7.43-1.95A13.93 13.93 0 0 0 16 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm0 25.5c-2.21 0-4.28-.65-6.02-1.76l-.43-.27-4.41 1.16 1.17-4.3-.28-.45A11.47 11.47 0 0 1 4.5 16C4.5 9.6 9.6 4.5 16 4.5S27.5 9.6 27.5 16 22.4 27.5 16 27.5zm6.29-8.56c-.34-.17-2.02-1-2.34-1.11-.32-.11-.55-.17-.78.17-.23.34-.88 1.11-1.08 1.34-.2.23-.4.26-.74.09-.34-.17-1.44-.53-2.74-1.69-1.01-.9-1.7-2.02-1.9-2.36-.2-.34-.02-.52.15-.69.15-.15.34-.4.51-.6.17-.2.23-.34.34-.57.11-.23.06-.43-.03-.6-.09-.17-.78-1.88-1.07-2.57-.28-.67-.57-.58-.78-.59h-.67c-.23 0-.6.09-.91.43-.31.34-1.19 1.16-1.19 2.83s1.22 3.28 1.39 3.51c.17.23 2.4 3.66 5.82 5.14.81.35 1.44.56 1.93.72.81.26 1.55.22 2.14.13.65-.1 2.02-.83 2.3-1.62.29-.8.29-1.48.2-1.62-.09-.14-.32-.23-.66-.4z"/>
             </svg>
             Enviar no WhatsApp
           </button>
-          ${instagram ? `
-          <a href="https://instagram.com/${_escConf(instagram.replace('@', ''))}"
-             target="_blank" rel="noopener noreferrer" class="conf-btn conf-btn--ig">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-            </svg>
-            Ver no Instagram
-          </a>` : ''}
         </div>
 
       </div>
@@ -951,20 +934,8 @@ style.textContent = `
   .conf-btn:active { transform: scale(.98); }
   .conf-btn--wpp {
     background: #25D366; color: #fff;
-    order: -1;
   }
   .conf-btn--wpp:hover { opacity: .92; }
-  .conf-btn--outline {
-    background: transparent;
-    border: 1.5px solid var(--color-border, rgba(255,255,255,.2));
-    color: var(--color-text, #fff);
-  }
-  .conf-btn--outline:hover { background: rgba(255,255,255,.05); }
-  .conf-btn--ig {
-    background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-    color: #fff;
-  }
-  .conf-btn--ig:hover { opacity: .92; }
 
   /* Desktop confirmação */
   @media (min-width: 600px) {
@@ -975,9 +946,7 @@ style.textContent = `
     }
     #conf-overlay.active .conf-modal { transform: translateY(0) scale(1); }
     .conf-header { border-radius: 24px 24px 0 0; }
-    .conf-btns { flex-direction: row; flex-wrap: wrap; }
-    .conf-btn--wpp { flex: 1 1 100%; order: -1; }
-    .conf-btn--outline, .conf-btn--ig { flex: 1; }
+    .conf-btns { flex-direction: row; }
   }
 `;
 document.head.appendChild(style);
