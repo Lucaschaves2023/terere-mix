@@ -563,7 +563,7 @@ async function mostrarConfirmacaoPedido(pedido) {
           <span class="conf-info-icon">📦</span>
           <div>
             <span class="conf-info-label">Tipo</span>
-            <span class="conf-info-value">${tipoLabel}</span>
+            <span class="conf-info-value" style="display:block;color:#111;font-weight:600;font-size:.875rem;">${tipoLabel}</span>
           </div>
         </div>
         ${pedido.endereco ? `
@@ -571,14 +571,14 @@ async function mostrarConfirmacaoPedido(pedido) {
           <span class="conf-info-icon">📍</span>
           <div>
             <span class="conf-info-label">Endereço</span>
-            <span class="conf-info-value">${_escConf(pedido.endereco)}</span>
+            <span class="conf-info-value" style="display:block;color:#111;font-weight:600;font-size:.875rem;">${_escConf(pedido.endereco)}</span>
           </div>
         </div>` : ''}
         <div class="conf-info-row">
           <span class="conf-info-icon">⏱️</span>
           <div>
             <span class="conf-info-label">Estimativa</span>
-            <span class="conf-info-value">15 – 35 minutos</span>
+            <span class="conf-info-value" style="display:block;color:#111;font-weight:600;font-size:.875rem;">15 – 35 minutos</span>
           </div>
         </div>
         ${pedido.payment_method ? `
@@ -586,7 +586,7 @@ async function mostrarConfirmacaoPedido(pedido) {
           <span class="conf-info-icon">💳</span>
           <div>
             <span class="conf-info-label">Pagamento</span>
-            <span class="conf-info-value">${_escConf(pedido.payment_method)}</span>
+            <span class="conf-info-value" style="display:block;color:#111;font-weight:600;font-size:.875rem;">${_escConf(pedido.payment_method)}</span>
           </div>
         </div>` : ''}
 
