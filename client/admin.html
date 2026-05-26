@@ -2402,8 +2402,8 @@
       const tipoTexto = tipoLabel.replace(/[\u{1F300}-\u{1FFFF}]|[☀-➿]/gu, '').trim();
       const statusTexto = (pedido.status || 'pendente').toUpperCase();
 
-      // ── Layout estilo 99Food/iFood: blocos verticais, sem colunas complexas ──
-      const W    = 30;
+      // ── Layout estilo 99Food/iFood: W=27 calibrado para 10px em 44mm ──
+      const W    = 27;
       const SEP  = '='.repeat(W);
       const DASH = '-'.repeat(W);
 
@@ -2457,12 +2457,8 @@
         ctr(`PEDIDO ${numPedido}`),
         ctr(dataPedido),
         DASH,
-        'DADOS DO CLIENTE',
-        DASH,
         dadosCliente,
         ...(endLines ? [endLines] : []),
-        DASH,
-        'ITENS DO PEDIDO',
         DASH,
         itemLinhas,
         DASH,
@@ -2490,9 +2486,9 @@
       -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   body {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 900;
-    line-height: 1.25;
+    line-height: 1.2;
     color: #000 !important;
     background: #fff !important;
     width: 44mm;
