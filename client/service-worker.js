@@ -2,7 +2,7 @@
    Cache-first para assets estáticos, network-first para API.
 */
 
-const CACHE = 'terere-mix-v3';
+const CACHE = 'terere-mix-v4';
 const STATIC = [
   '/',
   '/index.html',
