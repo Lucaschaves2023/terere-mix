@@ -2412,6 +2412,19 @@
         const p = Math.max(0, Math.floor((W - s.length) / 2));
         return ' '.repeat(p) + s;
       }
+      function ctrWrap(s) {
+        s = String(s || '');
+        if (!s) return '';
+        const lines = [];
+        while (s.length > 0) {
+          if (s.length <= W) { lines.push(ctr(s)); break; }
+          let cut = s.lastIndexOf(' ', W);
+          if (cut < 1) cut = W;
+          lines.push(ctr(s.slice(0, cut).trim()));
+          s = s.slice(cut).trim();
+        }
+        return lines.join('\n');
+      }
       function dotLine(esq, dir) {
         const l = String(esq || '');
         const r = String(dir || '');
@@ -2450,7 +2463,7 @@
         ctr(nomeLoja.toUpperCase()),
         ...(wppLoja ? [ctr(wppLoja)] : []),
         ...(igLoja  ? [ctr(igLoja)]  : []),
-        ...(endLoja ? [ctr(endLoja)] : []),
+        ...(endLoja ? [ctrWrap(endLoja)] : []),
         SEP,
         ctr('CUPOM NAO FISCAL'),
         SEP,
