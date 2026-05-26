@@ -2402,34 +2402,99 @@
       const tipoTexto = tipoLabel.replace(/[\u{1F300}-\u{1FFFF}]|[☀-➿]/gu, '').trim();
       const statusTexto = (pedido.status || 'pendente').toUpperCase();
 
-      const linhasItens = itens.map(i => {
-        const nomeRaw  = i.nome_produto || '';
-        const nome     = nomeRaw.length > 24 ? nomeRaw.slice(0, 23) + '.' : nomeRaw;
-        const unit     = fmt(i.preco_unit);
-        const total    = fmt(i.preco_unit * i.quantidade);
-        return `<tr>
-          <td class="c">${i.quantidade}x</td>
-          <td>${nome}</td>
-          <td class="r">R$&nbsp;${unit}</td>
-          <td class="r"><b>R$&nbsp;${total}</b></td>
-        </tr>`;
-      }).join('');
+      // ── Layout estilo 99Food/iFood: blocos verticais, sem colunas complexas ──
+      const W    = 30;
+      const SEP  = '='.repeat(W);
+      const DASH = '-'.repeat(W);
+
+      function ctr(s) {
+        s = String(s || '').slice(0, W);
+        const p = Math.max(0, Math.floor((W - s.length) / 2));
+        return ' '.repeat(p) + s;
+      }
+      function dotLine(esq, dir) {
+        const l = String(esq || '');
+        const r = String(dir || '');
+        const n = Math.max(1, W - l.length - r.length);
+        return l + '.'.repeat(n) + r;
+      }
 
       const subtotalDisplay = subtotalSalvo != null ? subtotalSalvo : subtotalItens;
 
-      const enderecoBloco = pedido.endereco ? `
-        <div class="div-dash"></div>
-        <div class="sec-title">ENDERECO DE ENTREGA</div>
-        <div>${pedido.endereco}</div>
-        ${pedido.bairro  ? `<div>Bairro: ${pedido.bairro}</div>`  : ''}
-        ${pedido.numero  ? `<div>Numero: ${pedido.numero}</div>`  : ''}
-      ` : '';
+      // Itens: 2 linhas por item (nome / preco) — sem risco de corte lateral
+      const itemLinhas = itens.map(i => {
+        const nome  = `${i.quantidade}x ${i.nome_produto || ''}`;
+        const preco = `R$ ${fmt(i.preco_unit * i.quantidade)}`;
+        return `${nome}\n${preco}`;
+      }).join('\n\n');
 
-      const obsBloco = obsLimpa ? `
-        <div class="div-dash"></div>
-        <div class="sec-title">OBSERVACOES</div>
-        <div style="white-space:pre-wrap;">${obsLimpa}</div>
-      ` : '';
+      // Dados do cliente em blocos verticais (estilo 99Food)
+      const dadosCliente = [
+        'Cliente:',
+        `${pedido.nome_cliente || 'Anonimo'}`,
+        '',
+        ...(pedido.telefone ? ['WhatsApp:', pedido.telefone, ''] : []),
+        'Tipo:',
+        tipoTexto,
+        '',
+        'Pagamento:',
+        pagamento,
+        ...(cupomCodigo ? ['', 'Cupom:', cupomCodigo] : []),
+      ].join('\n');
+
+      // Endereço em bloco vertical
+      const endLines = pedido.endereco ? '\n' + [
+        'Endereco:',
+        pedido.endereco,
+        ...(pedido.bairro ? [pedido.bairro] : []),
+        ...(pedido.numero ? [`No. ${pedido.numero}`] : []),
+      ].join('\n') : '';
+
+      const obsLines = obsLimpa ? `${DASH}\nObservacao:\n${obsLimpa}\n` : '';
+
+      const texto = [
+        '',
+        ctr(nomeLoja.toUpperCase()),
+        ...(wppLoja ? [ctr(wppLoja)] : []),
+        ...(igLoja  ? [ctr(igLoja)]  : []),
+        ...(endLoja ? [ctr(endLoja)] : []),
+        '',
+        SEP,
+        ctr('CUPOM NAO FISCAL'),
+        SEP,
+        '',
+        ctr(`PEDIDO ${numPedido}`),
+        ctr(dataPedido),
+        '',
+        DASH,
+        'DADOS DO CLIENTE',
+        DASH,
+        '',
+        dadosCliente,
+        endLines,
+        '',
+        DASH,
+        'ITENS DO PEDIDO',
+        DASH,
+        '',
+        itemLinhas,
+        '',
+        DASH,
+        dotLine('Subtotal',  `R$ ${fmt(subtotalDisplay)}`),
+        ...(desconto    > 0 ? [dotLine('Desconto',   `-R$ ${fmt(desconto)}`)]    : []),
+        ...(taxaEntrega > 0 ? [dotLine('Entrega',    `+R$ ${fmt(taxaEntrega)}`)]: []),
+        ...(acrescimo   > 0 ? [dotLine('Acrescimo',  `+R$ ${fmt(acrescimo)}`)]  : []),
+        SEP,
+        dotLine('TOTAL',     `R$ ${fmt(totalFinal)}`),
+        SEP,
+        '',
+        obsLines,
+        ctr('Obrigado pela preferencia!'),
+        ctr('Nao e documento fiscal'),
+        '',
+        ctr(`Impresso: ${agora}`),
+        '',
+      ].filter(s => s !== null && s !== undefined).join('\n');
 
       const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -2437,209 +2502,35 @@
 <meta charset="UTF-8">
 <title>Cupom ${numPedido}</title>
 <style>
-  @page {
-    size: 58mm auto;
-    margin: 0;
-  }
-  *, *::before, *::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    color: #000 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-  html {
-    background: #fff !important;
-  }
+  @page { size: 58mm auto; margin: 0; }
+  * { margin:0; padding:0; box-sizing:border-box; color:#000 !important;
+      -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   body {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 8px;
-    font-weight: 700;
+    font-size: 9px;
+    font-weight: bold;
     line-height: 1.4;
     color: #000 !important;
     background: #fff !important;
-    width: 48mm;
-    max-width: 48mm;
-    min-width: 48mm;
-    overflow: hidden;
-    padding: 1mm 0 6mm;
-    margin: 0;
+    width: 44mm;
+    max-width: 44mm;
+    padding: 2mm 0 10mm;
     -webkit-font-smoothing: none;
     text-rendering: geometricPrecision;
   }
-  .center { text-align: center; }
-  .r      { text-align: right; }
-  .div-solid { border-top: 2px solid #000 !important; margin: 4px 0; }
-  .div-dash  { border-top: 1px dashed #000 !important; margin: 4px 0; }
-  .loja-nome {
-    font-size: 12px;
-    font-weight: 900;
-  }
-  .nao-fiscal {
-    border: 1px dashed #000 !important;
-    padding: 2px 0;
-    font-size: 7px;
-    font-weight: 900;
-    text-align: center;
-    margin: 3px 0;
-    letter-spacing: .03em;
-  }
-  .num-pedido {
-    font-size: 14px;
-    font-weight: 900;
-  }
-  .sec-title {
-    font-size: 7px;
-    font-weight: 900;
-    letter-spacing: .06em;
-    margin: 3px 0 1px;
-    text-transform: uppercase;
-  }
-  .row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin: 1px 0;
-    font-size: 8px;
-    font-weight: 700;
-    gap: 2px;
-  }
-  .row span:first-child {
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-  .row span:last-child {
-    flex: 1 1 auto;
-    text-align: right;
-    font-weight: 900;
-  }
-  /* Tabela de itens: 4 colunas em % — QTD/DESC/UNIT/TOT */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 2px 0;
-    table-layout: fixed;
-  }
-  col.c-qtd  { width: 10%; }
-  col.c-desc { width: 50%; }
-  col.c-unit { width: 20%; }
-  col.c-tot  { width: 20%; }
-  th {
-    font-size: 7px;
-    font-weight: 900;
-    border-bottom: 1px solid #000 !important;
-    padding-bottom: 2px;
-    text-align: left;
-    overflow: hidden;
-  }
-  th.r, td.r { text-align: right; }
-  th.c, td.c { text-align: center; }
-  td {
-    padding: 2px 0;
-    vertical-align: top;
-    font-size: 10px;
-    font-weight: 700;
-    overflow: hidden;
+  pre {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    white-space: pre-wrap;
     word-break: break-word;
-  }
-  .totais { margin: 3px 0; }
-  .tot-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 2px 0;
-    font-size: 8px;
-    font-weight: 700;
-  }
-  .tot-row span:last-child { font-weight: 900; }
-  .tot-final {
-    font-size: 11px;
-    font-weight: 900;
-    border-top: 2px solid #000 !important;
-    margin-top: 4px;
-    padding-top: 4px;
-  }
-  .footer {
-    font-size: 7px;
-    font-weight: 700;
-    text-align: center;
-    margin-top: 4px;
+    overflow: hidden;
   }
 </style>
 </head>
 <body>
-
-  <div class="center">
-    <div class="loja-nome">${nomeLoja.toUpperCase()}</div>
-    ${wppLoja  ? `<div style="font-size:8px;font-weight:700;">${wppLoja}</div>`  : ''}
-    ${igLoja   ? `<div style="font-size:8px;font-weight:700;">${igLoja}</div>`   : ''}
-    ${endLoja  ? `<div style="font-size:8px;font-weight:700;">${endLoja}</div>`  : ''}
-  </div>
-
-  <div class="div-solid"></div>
-  <div class="nao-fiscal">*** CUPOM NAO FISCAL — USO INTERNO ***</div>
-  <div class="div-solid"></div>
-
-  <div class="center">
-    <div class="num-pedido">PEDIDO #${numPedido}</div>
-    <div style="font-size:8px;font-weight:700;">${dataPedido}</div>
-  </div>
-
-  <div class="div-dash"></div>
-
-  <div class="sec-title">DADOS DO CLIENTE</div>
-  <div class="row"><span>Cliente</span><span><b>${pedido.nome_cliente || 'Anonimo'}</b></span></div>
-  ${pedido.telefone ? `<div class="row"><span>WhatsApp</span><span>${pedido.telefone}</span></div>` : ''}
-  <div class="row"><span>Tipo</span><span>${tipoTexto}</span></div>
-  <div class="row"><span>Pagamento</span><span>${pagamento}</span></div>
-  ${cupomCodigo ? `<div class="row"><span>Cupom</span><span>${cupomCodigo}</span></div>` : ''}
-  <div class="row"><span>Status</span><span><b>${statusTexto}</b></span></div>
-
-  ${enderecoBloco}
-
-  <div class="div-dash"></div>
-
-  <div class="sec-title">ITENS DO PEDIDO</div>
-  <table>
-    <colgroup>
-      <col class="c-qtd">
-      <col class="c-desc">
-      <col class="c-unit">
-      <col class="c-tot">
-    </colgroup>
-    <thead>
-      <tr>
-        <th class="c">QTD</th>
-        <th>DESCRICAO</th>
-        <th class="r">UNIT</th>
-        <th class="r">TOT</th>
-      </tr>
-    </thead>
-    <tbody>${linhasItens}</tbody>
-  </table>
-
-  <div class="div-dash"></div>
-
-  <div class="totais">
-    <div class="tot-row"><span>Subtotal</span><span>R$ ${fmt(subtotalDisplay)}</span></div>
-    ${desconto   > 0 ? `<div class="tot-row"><span>Desconto${cupomCodigo ? ` (${cupomCodigo})` : ''}</span><span>- R$ ${fmt(desconto)}</span></div>` : ''}
-    ${taxaEntrega > 0 ? `<div class="tot-row"><span>Taxa de Entrega</span><span>+ R$ ${fmt(taxaEntrega)}</span></div>` : ''}
-    ${acrescimo  > 0 ? `<div class="tot-row"><span>Acrescimo Credito (+3%)</span><span>+ R$ ${fmt(acrescimo)}</span></div>` : ''}
-    <div class="tot-row tot-final"><span>TOTAL</span><span>R$ ${fmt(totalFinal)}</span></div>
-  </div>
-
-  ${obsBloco}
-
-  <div class="div-dash"></div>
-
-  <div class="footer">
-    <div>Impresso em: ${agora}</div>
-    <div style="margin-top:6px;font-weight:bold;">Obrigado pela preferencia!</div>
-    <div>Nao e documento fiscal</div>
-  </div>
-
+<pre>${texto}</pre>
 <script>window.onload = function() { window.focus(); window.print(); }<\/script>
 </body>
 </html>`;
