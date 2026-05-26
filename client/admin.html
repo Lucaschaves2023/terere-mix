@@ -2439,123 +2439,128 @@
 <style>
   @page {
     size: 58mm 420mm;
-    margin: 3mm 4mm;
+    margin: 0;
   }
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     color: #000 !important;
-    background: transparent !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    word-break: break-word;
-    overflow-wrap: break-word;
   }
-  html {
-    background: #fff !important;
-  }
-  body {
+  html, body {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
-    line-height: 1.4;
     color: #000 !important;
     background: #fff !important;
-    width: 100%;
+    width: 58mm;
+    max-width: 58mm;
+    padding: 2mm 1.5mm 8mm;
     -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: geometricPrecision;
   }
-  .center { text-align: center; }
-  .r      { text-align: right; }
-  .c      { text-align: center; }
-  .div-solid { border-top: 2px solid #000 !important; margin: 5px 0; }
-  .div-dash  { border-top: 1px dashed #000 !important; margin: 5px 0; }
+  .center  { text-align: center; }
+  .r       { text-align: right; }
+  .c       { text-align: center; }
+  .div-solid { border-top: 2px solid #000 !important; margin: 4px 0; }
+  .div-dash  { border-top: 1px dashed #000 !important; margin: 4px 0; }
   .loja-nome {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 900;
+    letter-spacing: .02em;
     color: #000 !important;
   }
   .nao-fiscal {
     border: 1px dashed #000 !important;
-    padding: 2px 0;
-    font-size: 9px;
+    padding: 3px 4px;
+    font-size: 10px;
     font-weight: 900;
     text-align: center;
     margin: 4px 0;
-    letter-spacing: .04em;
+    letter-spacing: .05em;
+    color: #000 !important;
   }
   .num-pedido {
-    font-size: 20px;
+    font-size: 21px;
     font-weight: 900;
+    color: #000 !important;
   }
   .sec-title {
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 900;
-    letter-spacing: .08em;
-    margin: 3px 0 2px;
-    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 2px;
+    margin-top: 2px;
+    color: #000 !important;
   }
-  /* Linha label: valor — label fixo à esq, valor quebra à dir */
   .row {
-    display: table;
-    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     margin: 2px 0;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
+    color: #000 !important;
+    gap: 4px;
   }
   .row span:first-child {
-    display: table-cell;
-    white-space: nowrap;
-    padding-right: 4px;
-    width: 1%;
+    flex-shrink: 0;
   }
   .row span:last-child {
-    display: table-cell;
     text-align: right;
-    font-weight: 900;
     word-break: break-word;
+    overflow-wrap: break-word;
   }
-  table { width: 100%; border-collapse: collapse; margin: 3px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 2px 0; }
   th {
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 900;
     border-bottom: 1px solid #000 !important;
     padding-bottom: 2px;
     text-align: left;
+    color: #000 !important;
   }
   th.r, td.r { text-align: right; }
-  th.c, td.c { text-align: center; }
+  th.c, td.c { text-align: center; width: 20px; }
   td {
     padding: 2px 0;
     vertical-align: top;
     font-size: 11px;
     font-weight: 700;
+    color: #000 !important;
   }
-  td:first-child { width: 24px; white-space: nowrap; }
-  td:last-child  { width: 40px; white-space: nowrap; }
-  .totais { margin: 4px 0; }
+  td:first-child { width: 20px; }
+  td:last-child  { width: 54px; }
+  .totais { margin: 3px 0; }
   .tot-row {
-    display: table;
-    width: 100%;
+    display: flex;
+    justify-content: space-between;
     padding: 2px 0;
     font-size: 12px;
     font-weight: 700;
+    color: #000 !important;
   }
-  .tot-row span:first-child { display: table-cell; }
-  .tot-row span:last-child  { display: table-cell; text-align: right; font-weight: 900; }
   .tot-final {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 900;
     border-top: 2px solid #000 !important;
     margin-top: 4px;
     padding-top: 4px;
+    color: #000 !important;
   }
   .footer {
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
     text-align: center;
-    margin-top: 4px;
+    color: #000 !important;
+  }
+  @media print {
+    html, body { width: 58mm; max-width: 58mm; }
+    * { color: #000 !important; background: transparent !important; }
+    @page { size: 58mm 420mm; margin: 0; }
   }
 </style>
 </head>
