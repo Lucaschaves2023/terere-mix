@@ -2438,7 +2438,7 @@
 <title>Cupom ${numPedido}</title>
 <style>
   @page {
-    size: 58mm 420mm;
+    size: 58mm auto;
     margin: 0;
   }
   *, *::before, *::after {
@@ -2456,16 +2456,17 @@
   }
   body {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 700;
-    line-height: 1.35;
+    line-height: 1.4;
     color: #000 !important;
     background: #fff !important;
-    width: 56mm;
-    max-width: 56mm;
-    overflow-x: hidden;
+    width: 48mm;
+    max-width: 48mm;
+    min-width: 48mm;
+    overflow: hidden;
     padding: 1mm 0 6mm;
-    margin: 0 auto;
+    margin: 0;
     -webkit-font-smoothing: none;
     text-rendering: geometricPrecision;
   }
@@ -2474,38 +2475,37 @@
   .div-solid { border-top: 2px solid #000 !important; margin: 4px 0; }
   .div-dash  { border-top: 1px dashed #000 !important; margin: 4px 0; }
   .loja-nome {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 900;
   }
   .nao-fiscal {
     border: 1px dashed #000 !important;
     padding: 2px 0;
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 900;
     text-align: center;
     margin: 3px 0;
-    letter-spacing: .04em;
+    letter-spacing: .03em;
   }
   .num-pedido {
-    font-size: 17px;
+    font-size: 14px;
     font-weight: 900;
   }
   .sec-title {
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 900;
-    letter-spacing: .08em;
+    letter-spacing: .06em;
     margin: 3px 0 1px;
     text-transform: uppercase;
   }
-  /* Label + valor: label esquerda fixa, valor direita quebra */
   .row {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     margin: 1px 0;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 700;
-    gap: 3px;
+    gap: 2px;
   }
   .row span:first-child {
     flex: 0 0 auto;
@@ -2515,21 +2515,20 @@
     flex: 1 1 auto;
     text-align: right;
     font-weight: 900;
-    max-width: 65%;
   }
-  /* Tabela de itens: 4 colunas em % */
+  /* Tabela de itens: 4 colunas em % — QTD/DESC/UNIT/TOT */
   table {
     width: 100%;
     border-collapse: collapse;
     margin: 2px 0;
     table-layout: fixed;
   }
-  col.c-qtd  { width: 15%; }
-  col.c-desc { width: 45%; }
+  col.c-qtd  { width: 10%; }
+  col.c-desc { width: 50%; }
   col.c-unit { width: 20%; }
   col.c-tot  { width: 20%; }
   th {
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 900;
     border-bottom: 1px solid #000 !important;
     padding-bottom: 2px;
@@ -2551,19 +2550,19 @@
     display: flex;
     justify-content: space-between;
     padding: 2px 0;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 700;
   }
   .tot-row span:last-child { font-weight: 900; }
   .tot-final {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 900;
     border-top: 2px solid #000 !important;
     margin-top: 4px;
     padding-top: 4px;
   }
   .footer {
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 700;
     text-align: center;
     margin-top: 4px;
@@ -2574,9 +2573,9 @@
 
   <div class="center">
     <div class="loja-nome">${nomeLoja.toUpperCase()}</div>
-    ${wppLoja  ? `<div style="font-size:10px;font-weight:700;">${wppLoja}</div>`  : ''}
-    ${igLoja   ? `<div style="font-size:10px;font-weight:700;">${igLoja}</div>`   : ''}
-    ${endLoja  ? `<div style="font-size:10px;font-weight:700;">${endLoja}</div>`  : ''}
+    ${wppLoja  ? `<div style="font-size:8px;font-weight:700;">${wppLoja}</div>`  : ''}
+    ${igLoja   ? `<div style="font-size:8px;font-weight:700;">${igLoja}</div>`   : ''}
+    ${endLoja  ? `<div style="font-size:8px;font-weight:700;">${endLoja}</div>`  : ''}
   </div>
 
   <div class="div-solid"></div>
@@ -2585,7 +2584,7 @@
 
   <div class="center">
     <div class="num-pedido">PEDIDO #${numPedido}</div>
-    <div style="font-size:10px;font-weight:700;">${dataPedido}</div>
+    <div style="font-size:8px;font-weight:700;">${dataPedido}</div>
   </div>
 
   <div class="div-dash"></div>
