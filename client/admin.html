@@ -2421,64 +2421,50 @@
 
       const subtotalDisplay = subtotalSalvo != null ? subtotalSalvo : subtotalItens;
 
-      // Itens: 2 linhas por item (nome / preco) — sem risco de corte lateral
+      // Itens: 2 linhas por item sem linha em branco entre eles
       const itemLinhas = itens.map(i => {
         const nome  = `${i.quantidade}x ${i.nome_produto || ''}`;
-        const preco = `R$ ${fmt(i.preco_unit * i.quantidade)}`;
+        const preco = `   R$ ${fmt(i.preco_unit * i.quantidade)}`;
         return `${nome}\n${preco}`;
-      }).join('\n\n');
+      }).join('\n');
 
-      // Dados do cliente em blocos verticais (estilo 99Food)
+      // Dados do cliente compacto: Label: Valor (uma linha por campo)
       const dadosCliente = [
-        'Cliente:',
-        `${pedido.nome_cliente || 'Anonimo'}`,
-        '',
-        ...(pedido.telefone ? ['WhatsApp:', pedido.telefone, ''] : []),
-        'Tipo:',
-        tipoTexto,
-        '',
-        'Pagamento:',
-        pagamento,
-        ...(cupomCodigo ? ['', 'Cupom:', cupomCodigo] : []),
+        `Cliente: ${pedido.nome_cliente || 'Anonimo'}`,
+        ...(pedido.telefone ? [`WhatsApp: ${pedido.telefone}`] : []),
+        `Tipo: ${tipoTexto}`,
+        `Pagamento: ${pagamento}`,
+        ...(cupomCodigo ? [`Cupom: ${cupomCodigo}`] : []),
       ].join('\n');
 
-      // Endereço em bloco vertical
-      const endLines = pedido.endereco ? '\n' + [
-        'Endereco:',
-        pedido.endereco,
+      // Endereço compacto
+      const endLines = pedido.endereco ? [
+        `Endereco: ${pedido.endereco}`,
         ...(pedido.bairro ? [pedido.bairro] : []),
         ...(pedido.numero ? [`No. ${pedido.numero}`] : []),
       ].join('\n') : '';
 
-      const obsLines = obsLimpa ? `${DASH}\nObservacao:\n${obsLimpa}\n` : '';
+      const obsLines = obsLimpa ? `${DASH}\nObs: ${obsLimpa}` : '';
 
       const texto = [
-        '',
         ctr(nomeLoja.toUpperCase()),
         ...(wppLoja ? [ctr(wppLoja)] : []),
         ...(igLoja  ? [ctr(igLoja)]  : []),
         ...(endLoja ? [ctr(endLoja)] : []),
-        '',
         SEP,
         ctr('CUPOM NAO FISCAL'),
         SEP,
-        '',
         ctr(`PEDIDO ${numPedido}`),
         ctr(dataPedido),
-        '',
         DASH,
         'DADOS DO CLIENTE',
         DASH,
-        '',
         dadosCliente,
-        endLines,
-        '',
+        ...(endLines ? [endLines] : []),
         DASH,
         'ITENS DO PEDIDO',
         DASH,
-        '',
         itemLinhas,
-        '',
         DASH,
         dotLine('Subtotal',  `R$ ${fmt(subtotalDisplay)}`),
         ...(desconto    > 0 ? [dotLine('Desconto',   `-R$ ${fmt(desconto)}`)]    : []),
@@ -2487,11 +2473,8 @@
         SEP,
         dotLine('TOTAL',     `R$ ${fmt(totalFinal)}`),
         SEP,
-        '',
-        obsLines,
-        ctr('Obrigado pela preferencia!'),
-        ctr('Nao e documento fiscal'),
-        '',
+        ...(obsLines ? [obsLines] : []),
+        ctr('Obrigado! Nao e doc. fiscal'),
         ctr(`Impresso: ${agora}`),
         '',
       ].filter(s => s !== null && s !== undefined).join('\n');
@@ -2509,12 +2492,12 @@
     font-family: 'Courier New', Courier, monospace;
     font-size: 11px;
     font-weight: 900;
-    line-height: 1.45;
+    line-height: 1.25;
     color: #000 !important;
     background: #fff !important;
     width: 44mm;
     max-width: 44mm;
-    padding: 2mm 0 10mm;
+    padding: 1mm 0 4mm;
     -webkit-font-smoothing: none;
     text-rendering: geometricPrecision;
   }
