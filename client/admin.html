@@ -2441,126 +2441,132 @@
     size: 58mm 420mm;
     margin: 0;
   }
-  * {
+  *, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     color: #000 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-  }
-  html, body {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 13px;
-    font-weight: 700;
-    color: #000 !important;
-    background: #fff !important;
-    width: 58mm;
-    max-width: 58mm;
-    padding: 2mm 1.5mm 8mm;
-    -webkit-font-smoothing: none;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: geometricPrecision;
-  }
-  .center  { text-align: center; }
-  .r       { text-align: right; }
-  .c       { text-align: center; }
-  .div-solid { border-top: 2px solid #000 !important; margin: 4px 0; }
-  .div-dash  { border-top: 1px dashed #000 !important; margin: 4px 0; }
-  .loja-nome {
-    font-size: 17px;
-    font-weight: 900;
-    letter-spacing: .02em;
-    color: #000 !important;
-  }
-  .nao-fiscal {
-    border: 1px dashed #000 !important;
-    padding: 3px 4px;
-    font-size: 10px;
-    font-weight: 900;
-    text-align: center;
-    margin: 4px 0;
-    letter-spacing: .05em;
-    color: #000 !important;
-  }
-  .num-pedido {
-    font-size: 21px;
-    font-weight: 900;
-    color: #000 !important;
-  }
-  .sec-title {
-    font-size: 10px;
-    font-weight: 900;
-    letter-spacing: .1em;
-    margin-bottom: 2px;
-    margin-top: 2px;
-    color: #000 !important;
-  }
-  .row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin: 2px 0;
-    font-size: 12px;
-    font-weight: 700;
-    color: #000 !important;
-    gap: 4px;
-  }
-  .row span:first-child {
-    flex-shrink: 0;
-  }
-  .row span:last-child {
-    text-align: right;
     word-break: break-word;
     overflow-wrap: break-word;
   }
-  table { width: 100%; border-collapse: collapse; margin: 2px 0; }
-  th {
+  html {
+    background: #fff !important;
+  }
+  body {
+    font-family: 'Courier New', Courier, monospace;
     font-size: 10px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #000 !important;
+    background: #fff !important;
+    width: 56mm;
+    max-width: 56mm;
+    overflow-x: hidden;
+    padding: 1mm 0 6mm;
+    margin: 0 auto;
+    -webkit-font-smoothing: none;
+    text-rendering: geometricPrecision;
+  }
+  .center { text-align: center; }
+  .r      { text-align: right; }
+  .div-solid { border-top: 2px solid #000 !important; margin: 4px 0; }
+  .div-dash  { border-top: 1px dashed #000 !important; margin: 4px 0; }
+  .loja-nome {
+    font-size: 14px;
+    font-weight: 900;
+  }
+  .nao-fiscal {
+    border: 1px dashed #000 !important;
+    padding: 2px 0;
+    font-size: 8px;
+    font-weight: 900;
+    text-align: center;
+    margin: 3px 0;
+    letter-spacing: .04em;
+  }
+  .num-pedido {
+    font-size: 17px;
+    font-weight: 900;
+  }
+  .sec-title {
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    margin: 3px 0 1px;
+    text-transform: uppercase;
+  }
+  /* Label + valor: label esquerda fixa, valor direita quebra */
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 1px 0;
+    font-size: 10px;
+    font-weight: 700;
+    gap: 3px;
+  }
+  .row span:first-child {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .row span:last-child {
+    flex: 1 1 auto;
+    text-align: right;
+    font-weight: 900;
+    max-width: 65%;
+  }
+  /* Tabela de itens: 4 colunas em % */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2px 0;
+    table-layout: fixed;
+  }
+  col.c-qtd  { width: 15%; }
+  col.c-desc { width: 45%; }
+  col.c-unit { width: 20%; }
+  col.c-tot  { width: 20%; }
+  th {
+    font-size: 8px;
     font-weight: 900;
     border-bottom: 1px solid #000 !important;
     padding-bottom: 2px;
     text-align: left;
-    color: #000 !important;
+    overflow: hidden;
   }
   th.r, td.r { text-align: right; }
-  th.c, td.c { text-align: center; width: 20px; }
+  th.c, td.c { text-align: center; }
   td {
     padding: 2px 0;
     vertical-align: top;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
-    color: #000 !important;
+    overflow: hidden;
+    word-break: break-word;
   }
-  td:first-child { width: 20px; }
-  td:last-child  { width: 54px; }
   .totais { margin: 3px 0; }
   .tot-row {
     display: flex;
     justify-content: space-between;
     padding: 2px 0;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 700;
-    color: #000 !important;
   }
+  .tot-row span:last-child { font-weight: 900; }
   .tot-final {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 900;
     border-top: 2px solid #000 !important;
     margin-top: 4px;
     padding-top: 4px;
-    color: #000 !important;
   }
   .footer {
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 700;
     text-align: center;
-    color: #000 !important;
-  }
-  @media print {
-    html, body { width: 58mm; max-width: 58mm; }
-    * { color: #000 !important; background: transparent !important; }
-    @page { size: 58mm 420mm; margin: 0; }
+    margin-top: 4px;
   }
 </style>
 </head>
@@ -2598,12 +2604,18 @@
 
   <div class="sec-title">ITENS DO PEDIDO</div>
   <table>
+    <colgroup>
+      <col class="c-qtd">
+      <col class="c-desc">
+      <col class="c-unit">
+      <col class="c-tot">
+    </colgroup>
     <thead>
       <tr>
         <th class="c">QTD</th>
         <th>DESCRICAO</th>
         <th class="r">UNIT</th>
-        <th class="r">TOTAL</th>
+        <th class="r">TOT</th>
       </tr>
     </thead>
     <tbody>${linhasItens}</tbody>
