@@ -2437,57 +2437,130 @@
 <meta charset="UTF-8">
 <title>Cupom ${numPedido}</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  html, body {
     font-family: 'Courier New', Courier, monospace;
     font-size: 12px;
-    color: #000;
-    background: #fff;
-    width: 80mm;
-    padding: 3mm 4mm 6mm;
+    font-weight: 700;
+    color: #000 !important;
+    background: #fff !important;
+    width: 58mm;
+    max-width: 58mm;
+    padding: 3mm 3mm 8mm;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
   }
-  .center  { text-align:center; }
-  .r       { text-align:right; }
-  .c       { text-align:center; }
-  .bold    { font-weight:bold; }
-  .div-solid { border-top:2px solid #000; margin:5px 0; }
-  .div-dash  { border-top:1px dashed #000; margin:5px 0; }
-  .loja-nome { font-size:18px; font-weight:bold; letter-spacing:.02em; }
+  .center  { text-align: center; }
+  .r       { text-align: right; }
+  .c       { text-align: center; }
+  .div-solid { border-top: 2px solid #000 !important; margin: 4px 0; }
+  .div-dash  { border-top: 1px dashed #000 !important; margin: 4px 0; }
+  .loja-nome {
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: .02em;
+    color: #000 !important;
+  }
   .nao-fiscal {
-    border:1px dashed #000; padding:3px 6px;
-    font-size:10px; font-weight:bold;
-    text-align:center; margin:5px 0; letter-spacing:.05em;
+    border: 1px dashed #000 !important;
+    padding: 3px 4px;
+    font-size: 9px;
+    font-weight: 900;
+    text-align: center;
+    margin: 4px 0;
+    letter-spacing: .05em;
+    color: #000 !important;
   }
-  .num-pedido { font-size:22px; font-weight:bold; }
+  .num-pedido {
+    font-size: 20px;
+    font-weight: 900;
+    color: #000 !important;
+  }
   .sec-title {
-    font-size:9px; font-weight:bold; letter-spacing:.08em;
-    margin-bottom:3px; margin-top:1px;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .1em;
+    margin-bottom: 2px;
+    margin-top: 2px;
+    color: #000 !important;
   }
-  .row { display:flex; justify-content:space-between; margin:1px 0; }
-  table { width:100%; border-collapse:collapse; margin:3px 0; }
-  th { font-size:9px; border-bottom:1px solid #000; padding-bottom:3px; text-align:left; }
-  th.r, td.r { text-align:right; }
-  th.c, td.c { text-align:center; width:22px; }
-  td { padding:2px 0; vertical-align:top; font-size:11px; }
-  td:first-child { width:22px; }
-  td:last-child  { width:68px; }
-  .totais { margin:3px 0; }
-  .tot-row { display:flex; justify-content:space-between; padding:1px 0; font-size:12px; }
-  .tot-final { font-size:16px; font-weight:bold; border-top:2px solid #000; margin-top:4px; padding-top:4px; }
-  .footer { font-size:10px; text-align:center; }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    margin: 1px 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: #000 !important;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 2px 0; }
+  th {
+    font-size: 9px;
+    font-weight: 900;
+    border-bottom: 1px solid #000 !important;
+    padding-bottom: 2px;
+    text-align: left;
+    color: #000 !important;
+  }
+  th.r, td.r { text-align: right; }
+  th.c, td.c { text-align: center; width: 20px; }
+  td {
+    padding: 2px 0;
+    vertical-align: top;
+    font-size: 10px;
+    font-weight: 700;
+    color: #000 !important;
+  }
+  td:first-child { width: 20px; }
+  td:last-child  { width: 54px; }
+  .totais { margin: 3px 0; }
+  .tot-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 1px 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: #000 !important;
+  }
+  .tot-final {
+    font-size: 15px;
+    font-weight: 900;
+    border-top: 2px solid #000 !important;
+    margin-top: 4px;
+    padding-top: 4px;
+    color: #000 !important;
+  }
+  .footer {
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+    color: #000 !important;
+  }
   @media print {
-    html, body { width:80mm; }
-    @page { size:80mm auto; margin:0; }
+    html, body { width: 58mm; max-width: 58mm; }
+    * { color: #000 !important; background: transparent !important; }
+    @page { size: 58mm auto; margin: 0; }
   }
 </style>
 </head>
 <body>
 
   <div class="center">
-    <div class="loja-nome">${nomeLoja}</div>
-    ${wppLoja  ? `<div>${wppLoja}</div>`  : ''}
-    ${igLoja   ? `<div>${igLoja}</div>`   : ''}
-    ${endLoja  ? `<div>${endLoja}</div>`  : ''}
+    <div class="loja-nome">${nomeLoja.toUpperCase()}</div>
+    ${wppLoja  ? `<div style="font-size:10px;font-weight:700;">${wppLoja}</div>`  : ''}
+    ${igLoja   ? `<div style="font-size:10px;font-weight:700;">${igLoja}</div>`   : ''}
+    ${endLoja  ? `<div style="font-size:10px;font-weight:700;">${endLoja}</div>`  : ''}
   </div>
 
   <div class="div-solid"></div>
@@ -2495,8 +2568,8 @@
   <div class="div-solid"></div>
 
   <div class="center">
-    <div class="num-pedido">PEDIDO ${numPedido}</div>
-    <div>${dataPedido}</div>
+    <div class="num-pedido">PEDIDO #${numPedido}</div>
+    <div style="font-size:10px;font-weight:700;">${dataPedido}</div>
   </div>
 
   <div class="div-dash"></div>
