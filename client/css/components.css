@@ -20,7 +20,7 @@
   align-items: center;
   justify-content: space-between;
   min-height: var(--header-height);
-  height: 60px;
+  height: 68px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -36,8 +36,8 @@
 }
 
 .top-header__logo {
-  width: 40px;
-  height: 40px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
