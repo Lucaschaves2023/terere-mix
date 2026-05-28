@@ -51,17 +51,20 @@ app.use(helmet({
 }));
 
 // ── CORS: whitelist explícita ─────────────────
-// Em produção defina ALLOWED_ORIGINS=https://seudominio.com.br,...
-// em dev localhost é liberado automaticamente.
-const _extraOrigins = (process.env.ALLOWED_ORIGINS || '')
-  .split(',').map(o => o.trim()).filter(Boolean);
+// VERCEL_URL é setado automaticamente pela Vercel com o domínio do deploy.
+// Para domínio personalizado adicione ALLOWED_ORIGINS=https://seudominio.com.br
+const _extraOrigins = [
+  ...(process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean),
+  ...(process.env.VERCEL_URL            ? [`https://${process.env.VERCEL_URL}`]            : []),
+  ...(process.env.VERCEL_PROJECT_PRODUCTION_URL ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : []),
+];
 
 const _isLocalhost = (origin) =>
   /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
 app.use(cors({
   origin(origin, cb) {
-    if (!origin) return cb(null, true); // curl / mobile / SSR / mesmo domínio
+    if (!origin) return cb(null, true); // curl / mobile / SSR
     const devOk  = process.env.NODE_ENV !== 'production' && _isLocalhost(origin);
     const listOk = _extraOrigins.includes(origin);
     const ok     = devOk || listOk;
