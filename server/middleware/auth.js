@@ -8,17 +8,21 @@
    - Se válido: deixa a requisição passar (next())
    - Se inválido ou ausente: retorna 401
 
-   Modo dev (sem SUPABASE_JWT_SECRET no .env):
-   - Exibe aviso no console e deixa passar — nunca faça isso em produção!
+   Segurança (fail-closed):
+   - Se SUPABASE_JWT_SECRET não estiver configurado → retorna 503 (nunca libera)
+   - Token ausente ou inválido → retorna 401
    ============================================================ */
 
 const jwt = require('jsonwebtoken');
 
 module.exports = function requireAdmin(req, res, next) {
-  // Se a variável de ambiente não estiver configurada, avisa e libera (modo dev)
+  // Sem secret → fail-closed em qualquer ambiente (nunca libera sem autenticação)
   if (!process.env.SUPABASE_JWT_SECRET) {
-    console.warn('[AUTH] ⚠️  SUPABASE_JWT_SECRET não configurado — rotas admin DESPROTEGIDAS. Configure o .env para ativar a autenticação.');
-    return next();
+    console.error('[AUTH] SUPABASE_JWT_SECRET não configurado — todas as rotas admin retornarão 503 até configurar o .env.');
+    return res.status(503).json({
+      success: false,
+      message: 'Serviço temporariamente indisponível. Contate o suporte.',
+    });
   }
 
   const header = req.headers['authorization'];

@@ -82,9 +82,8 @@ window.AdminAuth = AdminAuth;
     });
 
   } catch (err) {
-    // Erro de rede ou configuração — não bloqueia (pode estar offline em dev)
+    // Erro de rede ou configuração → redireciona para login (fail-closed)
     console.error('[ADMIN AUTH] Erro na verificação de sessão:', err);
-    document.querySelector('.admin-layout').style.display = 'flex';
-    _resolveReady();
+    window.location.href = 'admin-login.html';
   }
 })();

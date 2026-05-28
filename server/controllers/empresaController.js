@@ -79,10 +79,7 @@ async function updateEmpresa(req, res) {
     res.json({ success: true, data: rows[0] || null });
   } catch (err) {
     console.error('[empresa.update] ERRO:', err);
-    res.status(500).json({
-      success: false,
-      message: `Erro ao salvar empresa: ${err.message}`,
-    });
+    res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
   }
 }
 

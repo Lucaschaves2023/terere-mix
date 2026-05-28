@@ -5,16 +5,29 @@
 
 const { db } = require('../models/db');
 
+const STATUS_VALIDOS = ['pendente', 'preparando', 'pronto', 'entregue', 'cancelado'];
+const TIPOS_VALIDOS  = ['online', 'balcao'];
+const LIMIT_MAX      = 200;
+
 // GET /api/pedidos
 async function listar(req, res) {
   try {
     const { status, tipo, limit = 50 } = req.query;
+    const limitN = Math.min(Math.max(parseInt(limit) || 50, 1), LIMIT_MAX);
+
+    if (status && !STATUS_VALIDOS.includes(status)) {
+      return res.status(400).json({ success: false, message: `Status inválido. Use: ${STATUS_VALIDOS.join(', ')}.` });
+    }
+    if (tipo && !TIPOS_VALIDOS.includes(tipo)) {
+      return res.status(400).json({ success: false, message: `Tipo inválido. Use: ${TIPOS_VALIDOS.join(', ')}.` });
+    }
+
     let sql = 'SELECT * FROM pedidos WHERE 1=1';
     const params = [];
     if (status) { sql += ' AND status = ?'; params.push(status); }
     if (tipo)   { sql += ' AND tipo = ?';   params.push(tipo); }
     sql += ' ORDER BY criado_em DESC LIMIT ?';
-    params.push(parseInt(limit));
+    params.push(limitN);
     const pedidos = await db.all(sql, params);
     res.json({ success: true, data: pedidos });
   } catch (err) {
@@ -90,10 +103,41 @@ async function criar(req, res) {
         resolvidos.push({ produto, quantidade: item.quantidade, precoUnit });
       }
 
+      // Valida e recomputa desconto server-side — não confia no valor enviado pelo frontend
+      let descontoVal          = 0;
+      let discountTypeResolvido = null;
+      let discountPctResolvido  = null;
+
+      if (coupon_code) {
+        const couponRow = await tx.get(
+          `SELECT * FROM coupons WHERE upper(code) = upper(?) AND active = true`,
+          [coupon_code]
+        );
+        if (couponRow) {
+          const agora    = new Date();
+          const expirado = couponRow.expires_at && (() => {
+            const d = new Date(couponRow.expires_at); d.setHours(23, 59, 59, 999); return agora > d;
+          })();
+          const esgotado   = couponRow.usage_limit != null && couponRow.usage_count >= couponRow.usage_limit;
+          const abaixoMin  = couponRow.minimum_order_value != null &&
+                             subtotalItens < parseFloat(couponRow.minimum_order_value);
+
+          if (!expirado && !esgotado && !abaixoMin) {
+            discountTypeResolvido = couponRow.type;
+            if (couponRow.type === 'percent') {
+              discountPctResolvido = parseFloat(couponRow.percentage);
+              descontoVal = subtotalItens * (discountPctResolvido / 100);
+            } else if (couponRow.type === 'fixed') {
+              descontoVal = parseFloat(couponRow.fixed_amount) || 0;
+            }
+            descontoVal = Math.min(Math.max(descontoVal, 0), subtotalItens);
+          }
+        }
+      }
+
       // Calcula total final
-      const descontoVal   = parseFloat(discount_amount)  || 0;
-      const taxaEntrega   = parseFloat(delivery_fee)      || 0;
-      const acrescimoCred = parseFloat(credit_surcharge)  || 0;
+      const taxaEntrega   = parseFloat(delivery_fee)    || 0;
+      const acrescimoCred = parseFloat(credit_surcharge) || 0;
       const totalFinal    = subtotalItens - descontoVal + taxaEntrega + acrescimoCred;
 
       // Gera numped único via sequence (atômico, sem race condition)
@@ -117,8 +161,8 @@ async function criar(req, res) {
           totalFinal,
           observacao   || null,
           coupon_code  || null,
-          discount_type || null,
-          discount_percentage != null ? parseFloat(discount_percentage) : null,
+          discountTypeResolvido,
+          discountPctResolvido,
           descontoVal   > 0 ? descontoVal   : null,
           subtotalItens,
           taxaEntrega   > 0 ? taxaEntrega   : null,
@@ -144,14 +188,14 @@ async function criar(req, res) {
         );
       }
 
-      // Incrementa uso do cupom (ignora silenciosamente se falhar)
-      if (coupon_code) {
+      // Incrementa uso do cupom apenas se foi validado e aplicado nesta transação
+      if (coupon_code && discountTypeResolvido) {
         try {
           await tx.exec(
             'UPDATE coupons SET usage_count = usage_count + 1, updated_at = now() WHERE upper(code) = upper(?)',
             [coupon_code]
           );
-        } catch { /* ignora */ }
+        } catch { /* ignora falha não-crítica */ }
       }
 
       return pedidoId;

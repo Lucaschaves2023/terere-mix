@@ -6,6 +6,20 @@
 
 require('dotenv').config();
 
+// ── Validação de variáveis obrigatórias ───────
+const _REQUIRED_VARS = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_JWT_SECRET'];
+const _missingVars   = _REQUIRED_VARS.filter(v => !process.env[v]);
+if (_missingVars.length > 0) {
+  // Apenas aviso em dev (permite rodar parcialmente), erro fatal em prod
+  const msg = `[ENV] Variáveis de ambiente ausentes: ${_missingVars.join(', ')}`;
+  if (process.env.NODE_ENV === 'production') {
+    console.error(msg);
+    process.exit(1);
+  } else {
+    console.warn(msg);
+  }
+}
+
 const express   = require('express');
 const cors      = require('cors');
 const helmet    = require('helmet');
@@ -16,41 +30,102 @@ const app = express();
 
 // ── Segurança: headers HTTP ───────────────────
 app.use(helmet({
-  contentSecurityPolicy: false, // assets inline e CDN — evita quebrar o frontend
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:  ["'self'"],
+      scriptSrc:   ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://unpkg.com'],
+      styleSrc:    ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc:     ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      imgSrc:      ["'self'", 'data:', 'https:', 'blob:'],
+      connectSrc:  ["'self'", 'https://*.supabase.co', 'https://wa.me'],
+      frameSrc:    ["'none'"],
+      objectSrc:   ["'none'"],
+      baseUri:     ["'self'"],
+      formAction:  ["'self'"],
+    },
+  },
   crossOriginEmbedderPolicy: false,
+  hsts: process.env.NODE_ENV === 'production'
+    ? { maxAge: 31536000, includeSubDomains: true }
+    : false,
 }));
 
-// ── CORS: apenas origem conhecida ─────────────
+// ── CORS: whitelist explícita ─────────────────
+// Em produção defina ALLOWED_ORIGINS=https://seudominio.com.br,...
+// em dev localhost é liberado automaticamente.
 const _extraOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(o => o.trim()).filter(Boolean);
 
+const _isLocalhost = (origin) =>
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
 app.use(cors({
   origin(origin, cb) {
-    if (!origin) return cb(null, true); // curl / mobile / SSR
-    const ok =
-      origin.includes('localhost') ||
-      origin.endsWith('.vercel.app') ||
-      _extraOrigins.includes(origin);
+    if (!origin) return cb(null, true); // curl / mobile / SSR / mesmo domínio
+    const devOk  = process.env.NODE_ENV !== 'production' && _isLocalhost(origin);
+    const listOk = _extraOrigins.includes(origin);
+    const ok     = devOk || listOk;
     cb(ok ? null : new Error('Origem não permitida'), ok);
   },
   credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// ── Rate limiting — rotas públicas sensíveis ──
+// ── Rate limiting ─────────────────────────────
+const _rlMsg = (msg) => ({ success: false, message: msg });
+
+// Endpoints públicos gerais: 40 req / 15 min
 const _publicLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
+  windowMs: 15 * 60 * 1000,
   max: 40,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Muitas requisições. Tente novamente em alguns minutos.' },
+  message: _rlMsg('Muitas requisições. Tente novamente em alguns minutos.'),
 });
 
+// Login / tentativas de auth: 15 req / 15 min
 const _loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 15,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Muitas tentativas. Aguarde 15 minutos.' },
+  message: _rlMsg('Muitas tentativas. Aguarde 15 minutos.'),
+});
+
+// Validação de cupom — evita brute-force de códigos: 8 req / 15 min
+const _cupomLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: _rlMsg('Muitas tentativas de cupom. Aguarde 15 minutos.'),
+});
+
+// Consulta de pedidos por WhatsApp: 10 req / 15 min
+const _meusPedidosLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: _rlMsg('Muitas consultas. Tente novamente em alguns minutos.'),
+});
+
+// ── Logger de requisições (sem dados sensíveis) ─
+app.use((req, res, next) => {
+  const start  = Date.now();
+  const reqId  = Math.random().toString(36).slice(2, 9);
+  req._reqId   = reqId;
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    const lvl = res.statusCode >= 500 ? 'ERROR'
+              : res.statusCode >= 400 ? 'WARN'
+              : 'INFO';
+    if (req.path.startsWith('/api')) {
+      console.log(`[${lvl}] ${req.method} ${req.path} ${res.statusCode} ${ms}ms [${reqId}]`);
+    }
+  });
+  next();
 });
 
 // ── Middleware ────────────────────────────────
@@ -120,10 +195,10 @@ app.use('/api/pedidos', (req, res, next) => {
 app.use('/api/estoque', requireAdmin, estoqueRoutes);
 
 // Cupons:
-//   POST /api/cupons/validar → público com rate limit (evita brute-force)
+//   POST /api/cupons/validar → público com rate limit estrito
 //   Restante                 → admin (CRUD)
 app.use('/api/cupons', (req, res, next) => {
-  if (req.method === 'POST' && req.path === '/validar') return _publicLimiter(req, res, next);
+  if (req.method === 'POST' && req.path === '/validar') return _cupomLimiter(req, res, next);
   requireAdmin(req, res, next);
 }, cupomRoutes);
 
@@ -145,6 +220,27 @@ app.use('/api/empresa', (req, res, next) => {
   requireAdmin(req, res, next);
 }, empresaRoutes);
 
+// ── Helpers de upload ─────────────────────────
+const _ALLOWED_IMG_TYPES = ['image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
+const _MAX_UPLOAD_BYTES  = 4 * 1024 * 1024; // 4 MB
+
+function _checkMagicBytes(buffer, mimeType) {
+  if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') {
+    return buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+  }
+  if (mimeType === 'image/png') {
+    return buffer[0] === 0x89 && buffer[1] === 0x50 &&
+           buffer[2] === 0x4E && buffer[3] === 0x47;
+  }
+  if (mimeType === 'image/webp') {
+    return buffer[0] === 0x52 && buffer[1] === 0x49 &&  // RIFF
+           buffer[2] === 0x46 && buffer[3] === 0x46 &&
+           buffer[8] === 0x57 && buffer[9] === 0x45 &&  // WEBP
+           buffer[10] === 0x42 && buffer[11] === 0x50;
+  }
+  return false;
+}
+
 // Upload de imagem para promoções (admin)
 app.post('/api/upload/promocao', requireAdmin, async (req, res) => {
   try {
@@ -153,8 +249,20 @@ app.post('/api/upload/promocao', requireAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Dados de upload inválidos.' });
     }
 
+    if (!_ALLOWED_IMG_TYPES.includes(mimeType)) {
+      return res.status(400).json({ success: false, message: 'Formato não permitido. Use WebP, PNG ou JPEG.' });
+    }
+
     const fileName  = `promo_${Date.now()}.${ext}`;
     const buffer    = Buffer.from(base64, 'base64');
+
+    if (buffer.length > _MAX_UPLOAD_BYTES) {
+      return res.status(400).json({ success: false, message: 'Imagem muito grande. Máximo: 4MB.' });
+    }
+    if (!_checkMagicBytes(buffer, mimeType)) {
+      return res.status(400).json({ success: false, message: 'Arquivo inválido ou corrompido.' });
+    }
+
     const uploadUrl = `${process.env.SUPABASE_URL}/storage/v1/object/PROMOCOES/${fileName}`;
 
     const resp = await fetch(uploadUrl, {
@@ -186,14 +294,16 @@ app.post('/api/upload/produto', requireAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Dados de upload inválidos.' });
     }
 
-    const ALLOWED_TYPES = ['image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
-    if (!ALLOWED_TYPES.includes(mimeType)) {
+    if (!_ALLOWED_IMG_TYPES.includes(mimeType)) {
       return res.status(400).json({ success: false, message: 'Formato não permitido. Use WebP, PNG ou JPEG.' });
     }
 
     const buffer = Buffer.from(base64, 'base64');
-    if (buffer.length > 4 * 1024 * 1024) {
+    if (buffer.length > _MAX_UPLOAD_BYTES) {
       return res.status(400).json({ success: false, message: 'Imagem muito grande. Máximo: 4MB.' });
+    }
+    if (!_checkMagicBytes(buffer, mimeType)) {
+      return res.status(400).json({ success: false, message: 'Arquivo inválido ou corrompido.' });
     }
 
     const fileName  = `produto_${Date.now()}.${ext}`;
@@ -220,8 +330,8 @@ app.post('/api/upload/produto', requireAdmin, async (req, res) => {
   }
 });
 
-// Meus pedidos (público — filtra por WhatsApp)
-app.get('/api/meus-pedidos', _publicLimiter, require('./controllers/pedidoController').meusPedidos);
+// Meus pedidos (público — filtra por WhatsApp, rate limit estrito)
+app.get('/api/meus-pedidos', _meusPedidosLimiter, require('./controllers/pedidoController').meusPedidos);
 
 // Clientes (admin — lista clientes únicos extraídos dos pedidos)
 app.get('/api/admin/clientes', requireAdmin, require('./controllers/pedidoController').getClientes);
@@ -229,10 +339,18 @@ app.get('/api/admin/clientes', requireAdmin, require('./controllers/pedidoContro
 // Analytics: Dashboard e Relatórios (admin)
 app.use('/api/admin/analytics', requireAdmin, analyticsRoutes);
 
-// Health check
+// Health check — monitoramento e uptime
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status:    'ok',
+    timestamp: new Date().toISOString(),
+    uptime:    Math.floor(process.uptime()),
+    env:       process.env.NODE_ENV || 'development',
+    version:   process.env.npm_package_version || '1.0.0',
+  });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 // 404 para rotas /api não encontradas
 app.use('/api/{*path}', (req, res) => {
