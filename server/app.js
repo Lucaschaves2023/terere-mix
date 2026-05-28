@@ -7,11 +7,17 @@
 require('dotenv').config();
 
 // ── Validação de variáveis obrigatórias ───────
-const _REQUIRED_VARS = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_JWT_SECRET'];
+// Apenas DATABASE_URL e SUPABASE_URL são críticos para o servidor funcionar.
+// SUPABASE_JWT_SECRET é tratado pelo middleware auth.js (retorna 503 se ausente).
+const _REQUIRED_VARS = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
+const _WARN_VARS     = ['SUPABASE_JWT_SECRET'];
 const _missingVars   = _REQUIRED_VARS.filter(v => !process.env[v]);
+const _warnVars      = _WARN_VARS.filter(v => !process.env[v]);
+if (_warnVars.length > 0) {
+  console.warn(`[ENV] Atenção: ${_warnVars.join(', ')} não configurado — rotas admin retornarão 503.`);
+}
 if (_missingVars.length > 0) {
-  // Apenas aviso em dev (permite rodar parcialmente), erro fatal em prod
-  const msg = `[ENV] Variáveis de ambiente ausentes: ${_missingVars.join(', ')}`;
+  const msg = `[ENV] Variáveis críticas ausentes: ${_missingVars.join(', ')}`;
   if (process.env.NODE_ENV === 'production') {
     console.error(msg);
     process.exit(1);
