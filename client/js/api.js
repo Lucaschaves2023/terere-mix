@@ -15,6 +15,7 @@ const api = {
 
   setToken(token) { _authToken = token; },
   clearToken()    { _authToken = null;  },
+  getToken()      { return _authToken;  },
 
   // Monta os headers HTTP com Content-Type e, se disponível, Bearer token
   _headers(extra = {}) {

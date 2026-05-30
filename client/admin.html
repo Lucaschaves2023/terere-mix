@@ -3154,7 +3154,7 @@
     }
 
     function _adminToken() {
-      return localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || '';
+      return window.API?.getToken() || localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || '';
     }
 
     async function loadDashboard() {
