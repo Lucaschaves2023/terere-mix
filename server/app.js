@@ -7,11 +7,15 @@
 require('dotenv').config();
 
 // ── Validação de variáveis obrigatórias ───────
-// DATABASE_URL, SUPABASE_URL e SUPABASE_ANON_KEY são obrigatórios.
-// SUPABASE_JWT_SECRET é opcional: quando presente, auth.js usa verificação
-// local (mais rápida). Quando ausente, auth.js usa a REST API do Supabase.
-const _REQUIRED_VARS = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
+// SUPABASE_URL e SUPABASE_ANON_KEY são obrigatórios para auth.
+// DATABASE_URL é opcional: se ausente, pg usa variáveis PG* do ambiente
+// (injetadas automaticamente pelo Vercel Postgres quando conectado).
+// SUPABASE_JWT_SECRET é opcional: auth.js usa REST API do Supabase se ausente.
+const _REQUIRED_VARS = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
 const _missingVars   = _REQUIRED_VARS.filter(v => !process.env[v]);
+if (!process.env.DATABASE_URL) {
+  console.info('[ENV] DATABASE_URL não configurado — pg usará variáveis PG* do ambiente.');
+}
 if (!process.env.SUPABASE_JWT_SECRET) {
   console.info('[ENV] SUPABASE_JWT_SECRET não configurado — auth usará a API REST do Supabase (sem impacto funcional).');
 }
