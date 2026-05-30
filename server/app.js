@@ -42,11 +42,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:  ["'self'"],
-      scriptSrc:   ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://unpkg.com'],
+      scriptSrc:     ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://unpkg.com'],
+      scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc:    ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc:     ["'self'", 'https://fonts.gstatic.com', 'data:'],
       imgSrc:      ["'self'", 'data:', 'https:', 'blob:'],
-      connectSrc:  ["'self'", 'https://*.supabase.co', 'https://wa.me'],
+      connectSrc:  ["'self'", 'https://*.supabase.co', 'https://wa.me', 'https://cdn.jsdelivr.net'],
       frameSrc:    ["'none'"],
       objectSrc:   ["'none'"],
       baseUri:     ["'self'"],
