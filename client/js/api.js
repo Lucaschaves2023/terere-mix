@@ -84,7 +84,10 @@ const api = {
     const url = params ? `${API_BASE}/pedidos?${params}` : `${API_BASE}/pedidos`;
     const res = await fetch(url, { headers: this._headers() });
     const json = await res.json();
-    if (!json.success) throw new Error(json.message);
+    if (!json.success) {
+      console.error(`[API] GET /pedidos → HTTP ${res.status}:`, json.message);
+      throw new Error(json.message);
+    }
     return json.data;
   },
 

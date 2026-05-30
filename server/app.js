@@ -7,14 +7,13 @@
 require('dotenv').config();
 
 // ── Validação de variáveis obrigatórias ───────
-// Apenas DATABASE_URL e SUPABASE_URL são críticos para o servidor funcionar.
-// SUPABASE_JWT_SECRET é tratado pelo middleware auth.js (retorna 503 se ausente).
+// DATABASE_URL, SUPABASE_URL e SUPABASE_ANON_KEY são obrigatórios.
+// SUPABASE_JWT_SECRET é opcional: quando presente, auth.js usa verificação
+// local (mais rápida). Quando ausente, auth.js usa a REST API do Supabase.
 const _REQUIRED_VARS = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
-const _WARN_VARS     = ['SUPABASE_JWT_SECRET'];
 const _missingVars   = _REQUIRED_VARS.filter(v => !process.env[v]);
-const _warnVars      = _WARN_VARS.filter(v => !process.env[v]);
-if (_warnVars.length > 0) {
-  console.warn(`[ENV] Atenção: ${_warnVars.join(', ')} não configurado — rotas admin retornarão 503.`);
+if (!process.env.SUPABASE_JWT_SECRET) {
+  console.info('[ENV] SUPABASE_JWT_SECRET não configurado — auth usará a API REST do Supabase (sem impacto funcional).');
 }
 if (_missingVars.length > 0) {
   const msg = `[ENV] Variáveis críticas ausentes: ${_missingVars.join(', ')}`;
